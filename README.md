@@ -72,11 +72,19 @@ The VM is embedded directly from [flux-js](https://github.com/SuperInstance/flux
 - Memory (LOAD/STORE, 256-cell address space)
 - Full opcode set (arithmetic, logic, jumps, halt)
 
-## Related
+## Ecosystem
 
-- [FLUX](https://github.com/SuperInstance/flux) — main repo, spec, multi-language VMs
-- [flux-js](https://github.com/SuperInstance/flux-js) — JavaScript VM + assembler + vocabulary interpreter
-- [NEXT_HORIZONS.md](https://github.com/SuperInstance/flux/blob/main/NEXT_HORIZONS.md) — roadmap including this editor
+### FLUX Runtime
+- [flux-js](https://github.com/SuperInstance/flux-js) — JavaScript VM + assembler + vocabulary interpreter (`npm install flux-js`)
+- [flux-vm](https://github.com/SuperInstance/flux-vm) — Python VM (`pip install flux-vm`)
+- [flux-core](https://github.com/SuperInstance/flux-core) — Rust VM (`cargo add fluxvm`)
+
+### Policies
+- [flux-registry](https://github.com/SuperInstance/flux-registry) — Pre-compiled policy registry (`pip install flux-registry`)
+
+### Philosophy
+- [AI-Writings](https://github.com/SuperInstance/AI-Writings) — Essays, fiction, poetry
+- [NEXT_HORIZONS](https://github.com/SuperInstance/SuperInstance/blob/main/NEXT_HORIZONS.md) — Strategy
 
 ## License
 
