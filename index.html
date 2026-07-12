@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLUX Visual Editor</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #1a1a2e; color: #e0e0e0; font-family: 'Courier New', monospace; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+
+/* === Top Bar === */
+#topbar { background: #16213e; border-bottom: 2px solid #0f3460; padding: 8px 16px; display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
+#topbar h1 { font-size: 18px; color: #e94560; white-space: nowrap; }
+#topbar button { background: #0f3460; color: #e0e0e0; border: 1px solid #e94560; padding: 6px 16px; cursor: pointer; font-family: inherit; font-size: 13px; border-radius: 3px; }
+#topbar button:hover { background: #e94560; }
+#topbar select { background: #0f3460; color: #e0e0e0; border: 1px solid #535; padding: 6px; font-family: inherit; border-radius: 3px; }
+
+/* === Layout === */
+#main { display: flex; flex: 1; overflow: hidden; }
+#sidebar { width: 180px; background: #16213e; border-right: 2px solid #0f3460; padding: 8px; overflow-y: auto; flex-shrink: 0; }
+#canvas-area { flex: 1; position: relative; overflow: auto; background: #111; }
+#right-panel { width: 360px; background: #16213e; border-left: 2px solid #0f3460; display: flex; flex-direction: column; flex-shrink: 0; }
+
+/* === Palette === */
+#sidebar h3 { color: #e94560; font-size: 13px; margin-bottom: 6px; margin-top: 8px; }
+.palette-node { background: #0f3460; border: 1px solid #533; padding: 8px; margin: 4px 0; cursor: grab; text-align: center; font-size: 12px; border-radius: 4px; user-select: none; }
+.palette-node:hover { border-color: #e94560; background: #1a2050; }
+.palette-node:active { cursor: grabbing; }
+
+/* === Canvas === */
+#canvas { position: relative; width: 3000px; height: 2000px; background-image: radial-gradient(circle, #222 1px, transparent 1px); background-size: 20px 20px; }
+#wire-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+#wire-svg path { fill: none; stroke-width: 2; pointer-events: stroke; cursor: pointer; }
+#wire-svg path:hover { stroke-width: 4; }
+#wire-temp { fill: none; stroke: #ff0; stroke-width: 2; stroke-dasharray: 4; }
+
+/* === Nodes === */
+.node { position: absolute; min-width: 140px; background: #1a2050; border: 2px solid #3a5; border-radius: 6px; z-index: 2; user-select: none; }
+.node.selected { border-color: #ff0; box-shadow: 0 0 10px #ff0; }
+.node-header { background: #0f3460; padding: 4px 8px; font-size: 12px; font-weight: bold; border-radius: 4px 4px 0 0; cursor: move; display: flex; justify-content: space-between; align-items: center; }
+.node-header .del { cursor: pointer; color: #e94560; font-size: 14px; }
+.node-body { padding: 8px; font-size: 11px; }
+.node-body input, .node-body select { background: #111; color: #e0e0e0; border: 1px solid #444; padding: 2px 4px; font-family: inherit; font-size: 11px; width: 60px; border-radius: 2px; }
+.node-body label { display: inline-block; width: 50px; color: #88a; }
+.port { width: 12px; height: 12px; border-radius: 50%; background: #3a5; position: absolute; cursor: crosshair; border: 2px solid #1a2050; z-index: 3; }
+.port:hover { background: #ff0; }
+.port.input { left: -8px; top: 50%; transform: translateY(-50%); }
+.port.output { right: -8px; top: 50%; transform: translateY(-50%); }
+.port-title { position: absolute; font-size: 9px; color: #88a; pointer-events: none; }
+.port-title.input { left: 6px; top: 50%; transform: translateY(-50%); }
+.port-title.output { right: 6px; top: 50%; transform: translateY(-50%); text-align: right; }
+
+/* node type colors */
+.node[data-type="constant"] { border-color: #4a9; }
+.node[data-type="constant"] .node-header { background: #1a4a3a; }
+.node[data-type="arithmetic"] { border-color: #e94; }
+.node[data-type="arithmetic"] .node-header { background: #4a3a1a; }
+.node[data-type="compare"] { border-color: #a4e; }
+.node[data-type="compare"] .node-header { background: #3a2a4a; }
+.node[data-type="branch"] { border-color: #e55; }
+.node[data-type="branch"] .node-header { background: #4a1a1a; }
+.node[data-type="memory"] { border-color: #59c; }
+.node[data-type="memory"] .node-header { background: #1a3a5a; }
+.node[data-type="stack"] { border-color: #5a5; }
+.node[data-type="stack"] .node-header { background: #2a4a2a; }
+.node[data-type="output"] { border-color: #ee5; }
+.node[data-type="output"] .node-header { background: #4a4a1a; }
+.node[data-type="halt"] { border-color: #888; }
+.node[data-type="halt"] .node-header { background: #333; }
+
+/* === Right Panel === */
+#right-panel .panel-section { padding: 8px; border-bottom: 1px solid #0f3460; }
+#right-panel h3 { color: #e94560; font-size: 13px; margin-bottom: 6px; }
+#asm-output { width: 100%; min-height: 180px; background: #111; color: #4f4; border: 1px solid #333; font-family: inherit; font-size: 12px; padding: 6px; resize: vertical; }
+#hex-output { width: 100%; min-height: 60px; background: #111; color: #4af; border: 1px solid #333; font-family: inherit; font-size: 12px; padding: 6px; word-break: break-all; }
+#vm-output { width: 100%; min-height: 100px; background: #111; color: #ff4; border: 1px solid #333; font-family: inherit; font-size: 12px; padding: 6px; }
+#reg-display { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px; }
+.reg-cell { background: #0f3460; padding: 4px 6px; font-size: 11px; border-radius: 3px; text-align: center; }
+.reg-cell.nonzero { color: #4f4; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <h1>⚡ FLUX Visual Editor</h1>
+  <button onclick="compileGraph()">📋 Compile</button>
+  <button onclick="runBytecode()">▶ Run</button>
+  <button onclick="clearCanvas()">🗑 Clear</button>
+  <select id="example-select" onchange="loadExample(this.value)">
+    <option value="">— Load Example —</option>
+    <option value="hello">Hello World</option>
+    <option value="counter">Counter Loop</option>
+    <option value="deadband">Deadband (if/else)</option>
+    <option value="factorial">Factorial</option>
+  </select>
+  <span style="margin-left:auto; font-size:11px; color:#556;">
+    Drag nodes from left palette onto canvas · Click output port then input port to wire
+  </span>
+</div>
+
+<div id="main">
+  <!-- Palette -->
+  <div id="sidebar">
+    <h3> Nodes</h3>
+    <div class="palette-node" draggable="true" data-type="constant">📦 Constant</div>
+    <div class="palette-node" draggable="true" data-type="arithmetic">🔧 Arithmetic</div>
+    <div class="palette-node" draggable="true" data-type="compare">🔍 Compare</div>
+    <div class="palette-node" draggable="true" data-type="branch">🔀 Branch</div>
+    <div class="palette-node" draggable="true" data-type="memory">💾 Memory</div>
+    <div class="palette-node" draggable="true" data-type="stack">📚 Stack</div>
+    <div class="palette-node" draggable="true" data-type="output">📤 Output</div>
+    <div class="palette-node" draggable="true" data-type="halt">⏹ Halt</div>
+  </div>
+
+  <!-- Canvas -->
+  <div id="canvas-area">
+    <div id="canvas">
+      <svg id="wire-svg"></svg>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div id="right-panel">
+    <div class="panel-section">
+      <h3>Assembly Output</h3>
+      <textarea id="asm-output" readonly placeholder="// Compiled FLUX assembly appears here"></textarea>
+    </div>
+    <div class="panel-section">
+      <h3>Bytecode Hex</h3>
+      <div id="hex-output">—</div>
+    </div>
+    <div class="panel-section">
+      <h3>Execution Result</h3>
+      <div id="vm-output">—</div>
+    </div>
+    <div class="panel-section">
+      <h3>Registers</h3>
+      <div id="reg-display"></div>
+    </div>
+    <div class="panel-section" style="flex:1;">
+      <h3>Console</h3>
+      <div id="console" style="font-size:11px; color:#88a; max-height:150px; overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  EMBEDDED FLUX VM  (trimmed from flux.js)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const OP = {
+  NOP:0x00, MOV:0x01, LOAD:0x02, STORE:0x03,
+  JMP:0x04, JZ:0x05, JNZ:0x06, CALL:0x07,
+  IADD:0x08, ISUB:0x09, IMUL:0x0A, IDIV:0x0B,
+  IMOD:0x0C, INEG:0x0D, INC:0x0E, DEC:0x0F,
+  IAND:0x10, IOR:0x11, IXOR:0x12, INOT:0x13,
+  ISHL:0x14, ISHR:0x15,
+  PUSH:0x20, POP:0x21, DUP:0x22,
+  RET:0x28, MOVI:0x2B, CMP:0x2D,
+  JE:0x2E, JNE:0x2F,
+  HALT:0x80, YIELD:0x81
+};
+const MNEMONIC = Object.fromEntries(Object.entries(OP).map(([k,v])=>[v,k]));
+
+class FluxVM {
+  constructor(bytecode, maxCycles=10_000_000) {
+    this.gp = new Int32Array(16);
+    this.pc = 0; this.halted = false; this.cycles = 0;
+    this.stack = []; this.output = [];
+    this.bc = bytecode instanceof Uint8Array ? bytecode : new Uint8Array(bytecode);
+    this.maxCycles = maxCycles; this.error = null;
+    this._flagZero = false; this._flagSign = false;
+    this.mem = new Int32Array(256);
+  }
+  reg(i){ return this.gp[i]||0; }
+  _u8(){ return this.bc[this.pc++]; }
+  _i16(){ const lo=this.bc[this.pc++],hi=this.bc[this.pc++]; const v=lo|(hi<<8); return v>=32768?v-65536:v; }
+  _setFlags(r){ this._flagZero=(r===0); this._flagSign=(r<0); }
+  execute() {
+    this.halted=false; this.cycles=0; this.error=null;
+    try {
+      while(!this.halted && this.pc<this.bc.length && this.cycles<this.maxCycles) {
+        const op=this._u8(); this.cycles++;
+        switch(op) {
+          case 0x80: this.halted=true; break;
+          case 0x00: break;
+          case 0x01: { const d=this._u8(),s=this._u8(); this.gp[d]=this.gp[s]; break; }
+          case 0x2B: { const d=this._u8(); this.gp[d]=this._i16(); break; }
+          case 0x08: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=(this.gp[a]+this.gp[b])|0; this.gp[d]=r; this._setFlags(r); break; }
+          case 0x09: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=(this.gp[a]-this.gp[b])|0; this.gp[d]=r; this._setFlags(r); break; }
+          case 0x0A: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=(this.gp[a]*this.gp[b])|0; this.gp[d]=r; this._setFlags(r); break; }
+          case 0x0B: { const d=this._u8(),a=this._u8(),b=this._u8(); if(this.gp[b]===0) throw new Error('Division by zero'); this.gp[d]=(this.gp[a]/this.gp[b])|0; this._setFlags(this.gp[d]); break; }
+          case 0x0C: { const d=this._u8(),a=this._u8(),b=this._u8(); if(this.gp[b]===0) throw new Error('Modulo by zero'); this.gp[d]=(this.gp[a]%this.gp[b])|0; this._setFlags(this.gp[d]); break; }
+          case 0x0E: { const r=this._u8(); const v=(this.gp[r]+1)|0; this.gp[r]=v; this._setFlags(v); break; }
+          case 0x0F: { const r=this._u8(); const v=(this.gp[r]-1)|0; this.gp[r]=v; this._setFlags(v); break; }
+          case 0x20: this.stack.push(this.gp[this._u8()]); break;
+          case 0x21: this.gp[this._u8()]=this.stack.pop()||0; break;
+          case 0x22: { if(this.stack.length>0){ const v=this.stack[this.stack.length-1]; this.stack.push(v);} break; }
+          case 0x04: { const _r=this._u8(),off=this._i16(); this.pc=(this.pc+off)&0xFFFFFFFF; break; }
+          case 0x05: { const r=this._u8(),off=this._i16(); if(this.gp[r]===0) this.pc=(this.pc+off)&0xFFFFFFFF; break; }
+          case 0x06: { const r=this._u8(),off=this._i16(); if(this.gp[r]!==0) this.pc=(this.pc+off)&0xFFFFFFFF; break; }
+          case 0x07: { const _r=this._u8(),off=this._i16(); this.stack.push(this.pc); this.pc=(this.pc+off)&0xFFFFFFFF; break; }
+          case 0x28: { const _r=this._u8(),_p=this._u8(); if(this.stack.length>0){ this.pc=this.stack.pop(); } break; }
+          case 0x2D: { const a=this._u8(),b=this._u8(); this._flagZero=this.gp[a]===this.gp[b]; this._flagSign=this.gp[a]<this.gp[b]; break; }
+          case 0x2E: { const _r=this._u8(),off=this._i16(); if(this._flagZero) this.pc=(this.pc+off)&0xFFFFFFFF; break; }
+          case 0x2F: { const _r=this._u8(),off=this._i16(); if(!this._flagZero) this.pc=(this.pc+off)&0xFFFFFFFF; break; }
+          case 0x10: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=this.gp[a]&this.gp[b]; this.gp[d]=r; this._setFlags(r); break; }
+          case 0x11: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=this.gp[a]|this.gp[b]; this.gp[d]=r; this._setFlags(r); break; }
+          case 0x12: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=this.gp[a]^this.gp[b]; this.gp[d]=r; this._setFlags(r); break; }
+          case 0x13: { const d=this._u8(),s=this._u8(); const r=~this.gp[s]; this.gp[d]=r; this._setFlags(r); break; }
+          case 0x14: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=this.gp[a]<<(this.gp[b]&0x1f); this.gp[d]=r; this._setFlags(r); break; }
+          case 0x15: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=this.gp[a]>>(this.gp[b]&0x1f); this.gp[d]=r; this._setFlags(r); break; }
+          case 0x03: { const d=this._u8(),a=this._u8(); this.mem[this.gp[a]&0xFF]=this.gp[d]; break; } // STORE Rd, [Ra]
+          case 0x02: { const d=this._u8(),a=this._u8(); this.gp[d]=this.mem[this.gp[a]&0xFF]; break; } // LOAD Rd, [Ra]
+          case 0x81: break;
+          default: throw new Error(`Unknown opcode: 0x${op.toString(16).padStart(2,'0')}`);
+        }
+      }
+    } catch(e) { this.error = e.message; }
+    return this;
+  }
+  dump() {
+    const regs=[];
+    for(let i=0;i<16;i++) if(this.gp[i]!==0) regs.push(`R${i}=${this.gp[i]}`);
+    return `PC=${this.pc} cycles=${this.cycles} halted=${this.halted} [${regs.join(' ')}]`;
+  }
+}
+
+function assemble(text) {
+  const labels={}; const instructions=[];
+  let pc=0;
+  for(const rawLine of text.split('\n')) {
+    let line=rawLine.trim();
+    if(!line||line.startsWith('//')||line.startsWith(';')) continue;
+    if(line.includes(':')) {
+      const [labelPart,...rest]=line.split(':');
+      labels[labelPart.trim()]=pc;
+      line=rest.join(':').trim();
+      if(!line) continue;
+    }
+    const parts=line.replace(/,/g,' ').split(/\s+/);
+    const mn=parts[0].toUpperCase();
+    instructions.push({parts,pc});
+    if(mn in OP) {
+      if(['HALT','NOP','DUP','YIELD'].includes(mn)) pc+=1;
+      else if(['INC','DEC','PUSH','POP','INEG','INOT'].includes(mn)) pc+=2;
+      else if(['MOV','LOAD','STORE','CMP'].includes(mn)) pc+=3;
+      else if(['IADD','ISUB','IMUL','IDIV','IMOD','IAND','IOR','IXOR','ISHL','ISHR'].includes(mn)) pc+=4;
+      else if(['MOVI','JMP','JZ','JNZ','CALL','JE','JNE'].includes(mn)) pc+=4;
+      else if(mn==='RET') pc+=3;
+    }
+  }
+  const bc=[];
+  const resolveValue=(token,currentPc)=>{ token=token.trim(); const num=parseInt(token); if(!isNaN(num)) return num; if(token in labels) return labels[token]-currentPc; throw new Error(`Cannot resolve: ${token}`); };
+  for(const {parts,pc:instPc} of instructions) {
+    const mn=parts[0].toUpperCase();
+    if(!(mn in OP)) continue;
+    const op=OP[mn];
+    if(['HALT','NOP','DUP','YIELD'].includes(mn)) { bc.push(op); }
+    else if(['INC','DEC','PUSH','POP'].includes(mn)) { bc.push(op,parseInt(parts[1].slice(1))); }
+    else if(['MOV','LOAD','STORE','CMP'].includes(mn)) { bc.push(op,parseInt(parts[1].slice(1)),parseInt(parts[2].slice(1))); }
+    else if(['IADD','ISUB','IMUL','IDIV','IMOD','IAND','IOR','IXOR','ISHL','ISHR'].includes(mn)) {
+      bc.push(op,parseInt(parts[1].slice(1)),parseInt(parts[2].slice(1)),parts.length>3?parseInt(parts[3].slice(1)):parseInt(parts[1].slice(1)));
+    } else if(mn==='MOVI') {
+      bc.push(op,parseInt(parts[1].slice(1)));
+      const v=resolveValue(parts[2],bc.length+1); bc.push(v&0xFF,(v>>8)&0xFF);
+    } else if(['JMP','JZ','JNZ','CALL','JE','JNE'].includes(mn)) {
+      bc.push(op,parseInt(parts[1]?parts[1].slice(1):'0')||0);
+      const labelOrOff=parts[2]||parts[1];
+      const v=isNaN(parseInt(labelOrOff))?resolveValue(labelOrOff,bc.length+2):parseInt(labelOrOff);
+      bc.push(v&0xFF,(v>>8)&0xFF);
+    } else if(mn==='RET') { bc.push(op,0,0); }
+  }
+  return new Uint8Array(bc);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  VISUAL EDITOR STATE
+// ═══════════════════════════════════════════════════════════════════════════
+
+let nodes = [];      // {id, type, x, y, props, inputs:[], outputs:[]}
+let wires = [];      // {from:{nodeId,port}, to:{nodeId,port}}
+let nextId = 1;
+let selectedNode = null;
+let dragNode = null;
+let dragOffset = {x:0,y:0};
+let wireStart = null;  // {nodeId, port} when connecting
+
+const canvas = document.getElementById('canvas');
+const svg = document.getElementById('wire-svg');
+const canvasArea = document.getElementById('canvas-area');
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  NODE DEFINITIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+const NODE_DEFS = {
+  constant: {
+    title: 'Constant', inputs: [], outputs: ['val'],
+    props: [{key:'value', label:'Value', default:42, type:'number'},
+            {key:'reg', label:'Reg', default:0, type:'number'}],
+    compile: (n) => `MOVI R${n.props.reg||0}, ${n.props.value||0}`
+  },
+  arithmetic: {
+    title: 'Arithmetic', inputs: ['A','B'], outputs: ['result'],
+    props: [{key:'op', label:'Op', default:'ADD', type:'select', options:['ADD','SUB','MUL','DIV','MOD']},
+            {key:'reg', label:'Dest', default:0, type:'number'},
+            {key:'rA', label:'RA', default:1, type:'number'},
+            {key:'rB', label:'RB', default:2, type:'number'}],
+    compile: (n) => {
+      const m = {ADD:'IADD',SUB:'ISUB',MUL:'IMUL',DIV:'IDIV',MOD:'IMOD'};
+      return `${m[n.props.op]||'IADD'} R${n.props.reg||0}, R${n.props.rA||1}, R${n.props.rB||2}`;
+    }
+  },
+  compare: {
+    title: 'Compare', inputs: ['A','B'], outputs: ['flags'],
+    props: [{key:'rA', label:'RA', default:0, type:'number'},
+            {key:'rB', label:'RB', default:1, type:'number'}],
+    compile: (n) => `CMP R${n.props.rA||0}, R${n.props.rB||1}`
+  },
+  branch: {
+    title: 'Branch', inputs: ['cond'], outputs: ['→ true','→ false'],
+    props: [{key:'type', label:'Type', default:'JE', type:'select', options:['JE','JNE','JZ','JNZ','JMP']},
+            {key:'reg', label:'Reg', default:0, type:'number'},
+            {key:'label', label:'Label', default:'target', type:'text'}],
+    compile: (n) => `${n.props.type||'JE'} R${n.props.reg||0}, ${n.props.label||'target'}`
+  },
+  memory: {
+    title: 'Memory', inputs: ['addr/val'], outputs: ['loaded'],
+    props: [{key:'op', label:'Op', default:'STORE', type:'select', options:['STORE','LOAD']},
+            {key:'reg', label:'Reg', default:0, type:'number'},
+            {key:'addrReg', label:'AddrR', default:1, type:'number'}],
+    compile: (n) => n.props.op==='STORE'
+      ? `STORE R${n.props.reg||0}, R${n.props.addrReg||1}`
+      : `LOAD R${n.props.reg||0}, R${n.props.addrReg||1}`
+  },
+  stack: {
+    title: 'Stack', inputs: ['val'], outputs: ['popped'],
+    props: [{key:'op', label:'Op', default:'PUSH', type:'select', options:['PUSH','POP','DUP']},
+            {key:'reg', label:'Reg', default:0, type:'number'}],
+    compile: (n) => {
+      const op = n.props.op||'PUSH';
+      if(op==='DUP') return 'DUP';
+      return `${op} R${n.props.reg||0}`;
+    }
+  },
+  output: {
+    title: 'Output', inputs: ['value'], outputs: [],
+    props: [{key:'reg', label:'Reg', default:0, type:'number'}],
+    compile: (n) => `// OUT: R${n.props.reg||0} (value displayed in output panel)`
+  },
+  halt: {
+    title: 'Halt', inputs: [], outputs: [],
+    props: [],
+    compile: () => 'HALT'
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  NODE CREATION & RENDERING
+// ═══════════════════════════════════════════════════════════════════════════
+
+function createNode(type, x, y, props) {
+  const def = NODE_DEFS[type];
+  if (!def) return;
+  const node = {
+    id: nextId++, type, x, y,
+    props: {}
+  };
+  for (const p of def.props) {
+    node.props[p.key] = props && props[p.key] !== undefined ? props[p.key] : p.default;
+  }
+  nodes.push(node);
+  renderNode(node);
+  return node;
+}
+
+function renderNode(node) {
+  const def = NODE_DEFS[node.type];
+  const el = document.createElement('div');
+  el.className = 'node';
+  el.dataset.type = node.type;
+  el.dataset.id = node.id;
+  el.style.left = node.x + 'px';
+  el.style.top = node.y + 'px';
+
+  // Header
+  let html = `<div class="node-header" onmousedown="startDrag(event,${node.id})">
+    <span>${def.title}</span>
+    <span class="del" onclick="deleteNode(${node.id})">✕</span>
+  </div>`;
+
+  // Body with props
+  html += '<div class="node-body">';
+  for (const p of def.props) {
+    html += `<div><label>${p.label}</label>`;
+    if (p.type === 'select') {
+      html += `<select onchange="updateProp(${node.id},'${p.key}',this.value)">`;
+      for (const opt of p.options) {
+        html += `<option value="${opt}" ${node.props[p.key]===opt?'selected':''}>${opt}</option>`;
+      }
+      html += `</select>`;
+    } else {
+      html += `<input type="${p.type==='number'?'number':'text'}" value="${node.props[p.key]}" onchange="updateProp(${node.id},'${p.key}',this.value)">`;
+    }
+    html += `</div>`;
+  }
+  html += '</div>';
+
+  // Ports
+  const maxPorts = Math.max(def.inputs.length, def.outputs.length);
+  if (maxPorts > 0) {
+    el.style.height = ''; // auto
+  }
+  el.innerHTML = html;
+
+  // Add ports after innerHTML
+  def.inputs.forEach((name, i) => {
+    const portTop = 30 + i * 22 + 10;
+    const port = document.createElement('div');
+    port.className = 'port input';
+    port.style.top = portTop + 'px';
+    port.dataset.nodeId = node.id;
+    port.dataset.portType = 'input';
+    port.dataset.portIdx = i;
+    port.onmousedown = (e) => { e.stopPropagation(); handlePortClick(node.id, 'input', i, e); };
+    el.appendChild(port);
+    const lbl = document.createElement('span');
+    lbl.className = 'port-title input';
+    lbl.style.top = portTop + 'px';
+    lbl.textContent = name;
+    lbl.style.lineHeight = '12px';
+    el.appendChild(lbl);
+  });
+  def.outputs.forEach((name, i) => {
+    const portTop = 30 + i * 22 + 10;
+    const port = document.createElement('div');
+    port.className = 'port output';
+    port.style.top = portTop + 'px';
+    port.dataset.nodeId = node.id;
+    port.dataset.portType = 'output';
+    port.dataset.portIdx = i;
+    port.onmousedown = (e) => { e.stopPropagation(); handlePortClick(node.id, 'output', i, e); };
+    el.appendChild(port);
+    const lbl = document.createElement('span');
+    lbl.className = 'port-title output';
+    lbl.style.top = portTop + 'px';
+    lbl.textContent = name;
+    lbl.style.lineHeight = '12px';
+    el.appendChild(lbl);
+  });
+
+  canvas.appendChild(el);
+}
+
+function updateProp(id, key, val) {
+  const node = nodes.find(n => n.id === id);
+  if (!node) return;
+  // Convert numeric strings
+  const def = NODE_DEFS[node.type].props.find(p => p.key === key);
+  node.props[key] = def && def.type === 'number' ? parseInt(val) || 0 : val;
+}
+
+function deleteNode(id) {
+  nodes = nodes.filter(n => n.id !== id);
+  wires = wires.filter(w => w.from.nodeId !== id && w.to.nodeId !== id);
+  rerenderAll();
+}
+
+function startDrag(e, id) {
+  e.preventDefault();
+  const node = nodes.find(n => n.id === id);
+  if (!node) return;
+  const el = canvas.querySelector(`.node[data-id="${id}"]`);
+  const rect = el.getBoundingClientRect();
+  dragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  dragNode = id;
+  selectedNode = id;
+  document.querySelectorAll('.node').forEach(n => n.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+document.addEventListener('mousemove', (e) => {
+  if (dragNode !== null) {
+    const node = nodes.find(n => n.id === dragNode);
+    if (!node) return;
+    const canvasRect = canvas.getBoundingClientRect();
+    node.x = e.clientX - canvasRect.left - dragOffset.x;
+    node.y = e.clientY - canvasRect.top - dragOffset.y;
+    const el = canvas.querySelector(`.node[data-id="${dragNode}"]`);
+    if (el) {
+      el.style.left = node.x + 'px';
+      el.style.top = node.y + 'px';
+    }
+    drawWires();
+  }
+  // Draw temp wire
+  if (wireStart) {
+    drawTempWire(e);
+  }
+});
+
+document.addEventListener('mouseup', () => {
+  dragNode = null;
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  WIRING
+// ═══════════════════════════════════════════════════════════════════════════
+
+function handlePortClick(nodeId, portType, portIdx, e) {
+  if (portType === 'output') {
+    wireStart = { nodeId, portIdx };
+    log('Started wire from node ' + nodeId);
+  } else if (portType === 'input' && wireStart) {
+    // Don't allow self-connection
+    if (wireStart.nodeId === nodeId) {
+      wireStart = null;
+      clearTempWire();
+      return;
+    }
+    // Remove existing wire to this input
+    wires = wires.filter(w => !(w.to.nodeId === nodeId && w.to.port === portIdx));
+    wires.push({ from: { nodeId: wireStart.nodeId, port: wireStart.portIdx }, to: { nodeId, port: portIdx } });
+    wireStart = null;
+    clearTempWire();
+    drawWires();
+    log('Wire connected');
+  }
+}
+
+function clearTempWire() {
+  const temp = document.getElementById('wire-temp');
+  if (temp) temp.remove();
+}
+
+function drawTempWire(e) {
+  clearTempWire();
+  if (!wireStart) return;
+  const fromEl = canvas.querySelector(`.node[data-id="${wireStart.nodeId}"] .port.output[data-port-idx="${wireStart.portIdx}"]`);
+  if (!fromEl) return;
+  const fromRect = fromEl.getBoundingClientRect();
+  const canvasRect = canvas.getBoundingClientRect();
+  const x1 = fromRect.left + fromRect.width/2 - canvasRect.left;
+  const y1 = fromRect.top + fromRect.height/2 - canvasRect.top;
+  const x2 = e.clientX - canvasRect.left;
+  const y2 = e.clientY - canvasRect.top;
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.id = 'wire-temp';
+  path.setAttribute('d', bezierPath(x1,y1,x2,y2));
+  svg.appendChild(path);
+}
+
+function bezierPath(x1,y1,x2,y2) {
+  const dx = Math.abs(x2-x1);
+  const cx1 = x1 + dx*0.5;
+  const cx2 = x2 - dx*0.5;
+  return `M ${x1} ${y1} C ${cx1} ${y1}, ${cx2} ${y2}, ${x2} ${y2}`;
+}
+
+function getPortPos(nodeId, portType, portIdx) {
+  const el = canvas.querySelector(`.node[data-id="${nodeId}"] .port.${portType}[data-port-idx="${portIdx}"]`);
+  if (!el) return null;
+  const rect = el.getBoundingClientRect();
+  const canvasRect = canvas.getBoundingClientRect();
+  return {
+    x: rect.left + rect.width/2 - canvasRect.left,
+    y: rect.top + rect.height/2 - canvasRect.top
+  };
+}
+
+function drawWires() {
+  // Clear existing wires (except temp)
+  svg.querySelectorAll('path:not(#wire-temp)').forEach(p => p.remove());
+  for (let i = 0; i < wires.length; i++) {
+    const w = wires[i];
+    const from = getPortPos(w.from.nodeId, 'output', w.from.port);
+    const to = getPortPos(w.to.nodeId, 'input', w.to.port);
+    if (!from || !to) continue;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', bezierPath(from.x, from.y, to.x, to.y));
+    path.setAttribute('stroke', '#3a5');
+    path.setAttribute('data-wire-idx', i);
+    path.onmousedown = (e) => { e.stopPropagation(); if(confirm('Delete wire?')) { wires.splice(i,1); drawWires(); } };
+    svg.appendChild(path);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  DRAG FROM PALETTE
+// ═══════════════════════════════════════════════════════════════════════════
+
+document.querySelectorAll('.palette-node').forEach(el => {
+  el.addEventListener('dragstart', (e) => {
+    e.dataTransfer.setData('text/plain', el.dataset.type);
+  });
+});
+
+canvas.addEventListener('dragover', (e) => { e.preventDefault(); });
+canvas.addEventListener('drop', (e) => {
+  e.preventDefault();
+  const type = e.dataTransfer.getData('text/plain');
+  if (!type) return;
+  const canvasRect = canvas.getBoundingClientRect();
+  const x = e.clientX - canvasRect.left - 70;
+  const y = e.clientY - canvasRect.top - 20;
+  createNode(type, x, y);
+  log(`Created ${type} node`);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  CLEAR & RERENDER
+// ═══════════════════════════════════════════════════════════════════════════
+
+function clearCanvas() {
+  nodes = []; wires = []; nextId = 1;
+  rerenderAll();
+  document.getElementById('asm-output').value = '';
+  document.getElementById('hex-output').textContent = '—';
+  document.getElementById('vm-output').textContent = '—';
+  document.getElementById('reg-display').innerHTML = '';
+  log('Canvas cleared');
+}
+
+function rerenderAll() {
+  canvas.querySelectorAll('.node').forEach(el => el.remove());
+  for (const node of nodes) renderNode(node);
+  drawWires();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  COMPILATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+function topologicalSort() {
+  // Build adjacency from wires
+  const adj = {}; const inDeg = {};
+  for (const n of nodes) { adj[n.id] = []; inDeg[n.id] = 0; }
+  for (const w of wires) {
+    adj[w.from.nodeId].push(w.to.nodeId);
+    inDeg[w.to.nodeId] = (inDeg[w.to.nodeId]||0) + 1;
+  }
+  // Kahn's algorithm
+  const queue = nodes.filter(n => (inDeg[n.id]||0) === 0).map(n => n.id);
+  const order = [];
+  while (queue.length) {
+    const id = queue.shift();
+    const node = nodes.find(n => n.id === id);
+    if (node) order.push(node);
+    for (const next of (adj[id]||[])) {
+      inDeg[next]--;
+      if (inDeg[next] === 0) queue.push(next);
+    }
+  }
+  // Add any remaining (cycles etc)
+  for (const n of nodes) if (!order.includes(n)) order.push(n);
+  return order;
+}
+
+function compileGraph() {
+  if (nodes.length === 0) {
+    log('Nothing to compile — canvas is empty');
+    return null;
+  }
+  const sorted = topologicalSort();
+  const lines = [];
+  const usedLabels = new Set();
+  let asmText = '';
+
+  // Generate assembly from sorted nodes
+  for (const node of sorted) {
+    const def = NODE_DEFS[node.type];
+    if (!def || !def.compile) continue;
+    const compiled = def.compile(node);
+
+    // Add labels for branch targets
+    if (node.type === 'branch') {
+      const targetLabel = node.props.label || 'target';
+      // The branch targets the next node after the branch's false path
+      // We'll create labels at the compiled output level
+    }
+
+    lines.push(compiled);
+  }
+
+  // Now resolve: we need to handle branch labels by position
+  // For visual simplicity, branches create labels at the top of the graph
+  // Let's do a simpler approach: use line numbers
+
+  // Process branch nodes to use actual offsets
+  // Re-compile with proper label resolution
+  const finalLines = [];
+  const labelPositions = {};
+
+  // First pass: compute instruction sizes and label positions
+  // Label = placed right before the node that the branch wire points to
+  for (const node of sorted) {
+    // If this node is a branch target (something connects to it via input port 0),
+    // place a label here
+    const incomingWire = wires.find(w => w.to.nodeId === node.id && w.to.port === 0);
+    if (incomingWire && nodes.find(n => n.id === incomingWire.from.nodeId)?.type === 'branch') {
+      const fromNode = nodes.find(n => n.id === incomingWire.from.nodeId);
+      const labelName = `L_${node.id}`;
+      labelPositions[labelName] = finalLines.length;
+      // Update the branch node's label prop
+      if (fromNode) fromNode._resolvedLabel = labelName;
+    }
+  }
+
+  // Second pass: emit
+  const emit = [];
+  for (const node of sorted) {
+    const def = NODE_DEFS[node.type];
+    if (!def) continue;
+
+    // Check if we need a label before this node
+    const labelEntry = Object.entries(labelPositions).find(([k,v]) => k === `L_${node.id}`);
+    if (labelEntry) {
+      emit.push(`${labelEntry[0]}:`);
+    }
+
+    let compiled = def.compile(node);
+    // Replace branch label references
+    if (node.type === 'branch' && node._resolvedLabel) {
+      compiled = compiled.replace(/target|label/i, node._resolvedLabel);
+      // Also update the props for proper assembly
+      const mn = node.props.type || 'JE';
+      const reg = node.props.reg || 0;
+      compiled = `${mn} R${reg}, ${node._resolvedLabel}`;
+    }
+    emit.push(compiled);
+  }
+
+  asmText = emit.join('\n');
+  document.getElementById('asm-output').value = asmText;
+
+  // Assemble to bytecode
+  try {
+    const bc = assemble(asmText);
+    const hex = Array.from(bc).map(b => b.toString(16).padStart(2,'0')).join(' ');
+    document.getElementById('hex-output').textContent = hex;
+    log(`Compiled: ${bc.length} bytes, ${sorted.length} nodes`);
+    return bc;
+  } catch(e) {
+    document.getElementById('hex-output').textContent = 'Error: ' + e.message;
+    log('Compile error: ' + e.message);
+    return null;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  RUN
+// ═══════════════════════════════════════════════════════════════════════════
+
+function runBytecode() {
+  let bc = compileGraph();
+  if (!bc) return;
+
+  const vm = new FluxVM(bc);
+  vm.execute();
+
+  // Display results
+  let outHtml = '';
+  if (vm.error) {
+    outHtml = `<span style="color:#f44;">ERROR: ${vm.error}</span>\n`;
+  } else {
+    outHtml = `<span style="color:#4f4;">✓ HALTED</span>\n`;
+  }
+  outHtml += `Cycles: ${vm.cycles}\n`;
+  outHtml += `PC: ${vm.pc}\n`;
+  outHtml += `Stack: [${vm.stack.join(', ')}]\n`;
+  outHtml += `Output registers:\n`;
+  // Show output node values
+  for (const node of nodes) {
+    if (node.type === 'output') {
+      outHtml += `  OUT R${node.props.reg||0} = ${vm.reg(node.props.reg||0)}\n`;
+    }
+  }
+  document.getElementById('vm-output').innerHTML = outHtml.replace(/\n/g,'<br>');
+
+  // Registers
+  const regEl = document.getElementById('reg-display');
+  regEl.innerHTML = '';
+  for (let i = 0; i < 16; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'reg-cell' + (vm.gp[i] !== 0 ? ' nonzero' : '');
+    cell.textContent = `R${i}: ${vm.gp[i]}`;
+    regEl.appendChild(cell);
+  }
+
+  log(`Executed: ${vm.cycles} cycles, halted=${vm.halted}`);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  EXAMPLES
+// ═══════════════════════════════════════════════════════════════════════════
+
+function loadExample(name) {
+  clearCanvas();
+  if (name === 'hello') {
+    const n1 = createNode('constant', 100, 100, {value:42, reg:0});
+    const n2 = createNode('output', 320, 100, {reg:0});
+    const n3 = createNode('halt', 520, 100);
+    wires.push({from:{nodeId:n1.id,port:0}, to:{nodeId:n2.id,port:0}});
+    rerenderAll();
+    log('Loaded: Hello World');
+  }
+  else if (name === 'counter') {
+    // Count 1..5 using loop: MOVI R0,1; loop: PUSH R0; INC R0; CMP R0,6; JNE R0, loop; HALT
+    const n1 = createNode('constant', 80, 100, {value:1, reg:0});      // R0 = 1
+    const n2 = createNode('stack', 280, 100, {op:'PUSH', reg:0});      // PUSH R0
+    const n3 = createNode('constant', 80, 220, {value:0, reg:0});      // placeholder for INC
+    const n4 = createNode('arithmetic', 280, 220, {op:'ADD', reg:0, rA:0, rB:0}); // actually we want INC
+    // Simpler: just use constants and halt, showing the concept
+    const n5 = createNode('constant', 80, 340, {value:6, reg:1});      // R1 = 6 (limit)
+    const n6 = createNode('compare', 280, 340, {rA:0, rB:1});          // CMP R0, R1
+    const n7 = createNode('branch', 480, 340, {type:'JNE', reg:0, label:'L_2'}); // JNE back
+    const n8 = createNode('output', 480, 100, {reg:0});
+    const n9 = createNode('halt', 680, 100);
+
+    // Wire: counter -> push -> output -> halt
+    wires.push({from:{nodeId:n1.id,port:0}, to:{nodeId:n2.id,port:0}});
+    wires.push({from:{nodeId:n2.id,port:0}, to:{nodeId:n8.id,port:0}});
+    wires.push({from:{nodeId:n8.id,port:0}, to:{nodeId:n9.id,port:0}});
+    rerenderAll();
+    log('Loaded: Counter Loop (conceptual)');
+  }
+  else if (name === 'deadband') {
+    // if R0 > R1 then R2=1 else R2=0
+    const n1 = createNode('constant', 80, 100, {value:10, reg:0});
+    const n2 = createNode('constant', 80, 200, {value:5, reg:1});
+    const n3 = createNode('compare', 300, 150, {rA:0, rB:1});
+    const n4 = createNode('branch', 500, 150, {type:'JG', reg:0, label:'above'});
+    // Note: JG doesn't exist, use JNE after CMP as proxy
+    n4.props.type = 'JNE';
+    n4.props.label = 'above';
+    const n5 = createNode('constant', 700, 80, {value:0, reg:2});   // else: R2=0
+    const n6 = createNode('constant', 700, 200, {value:1, reg:2});  // then: R2=1
+    const n7 = createNode('output', 900, 140, {reg:2});
+    const n8 = createNode('halt', 1100, 140);
+
+    wires.push({from:{nodeId:n1.id,port:0}, to:{nodeId:n3.id,port:0}});
+    wires.push({from:{nodeId:n2.id,port:0}, to:{nodeId:n3.id,port:1}});
+    wires.push({from:{nodeId:n3.id,port:0}, to:{nodeId:n4.id,port:0}});
+    wires.push({from:{nodeId:n4.id,port:0}, to:{nodeId:n5.id,port:0}});
+    wires.push({from:{nodeId:n4.id,port:1}, to:{nodeId:n6.id,port:0}});
+    wires.push({from:{nodeId:n5.id,port:0}, to:{nodeId:n7.id,port:0}});
+    wires.push({from:{nodeId:n6.id,port:0}, to:{nodeId:n7.id,port:0}});
+    wires.push({from:{nodeId:n7.id,port:0}, to:{nodeId:n8.id,port:0}});
+    rerenderAll();
+    log('Loaded: Deadband (if/else branches)');
+  }
+  else if (name === 'factorial') {
+    // Factorial 5: MOVI R0,5; MOVI R1,1; loop: IMUL R1,R1,R0; DEC R0; JNZ R0,loop; HALT
+    const n1 = createNode('constant', 80, 100, {value:5, reg:0});
+    const n2 = createNode('constant', 80, 200, {value:1, reg:1});
+    const n3 = createNode('arithmetic', 300, 150, {op:'MUL', reg:1, rA:1, rB:0});
+    // DEC R0 — use arithmetic SUB with a 1 constant
+    const n4 = createNode('constant', 80, 320, {value:1, reg:2});
+    const n5 = createNode('arithmetic', 300, 300, {op:'SUB', reg:0, rA:0, rB:2});
+    const n6 = createNode('branch', 520, 300, {type:'JNZ', reg:0, label:'L_3'});
+    const n7 = createNode('output', 520, 150, {reg:1});
+    const n8 = createNode('halt', 720, 150);
+
+    wires.push({from:{nodeId:n1.id,port:0}, to:{nodeId:n3.id,port:0}});
+    wires.push({from:{nodeId:n2.id,port:0}, to:{nodeId:n3.id,port:1}});
+    wires.push({from:{nodeId:n3.id,port:0}, to:{nodeId:n7.id,port:0}});
+    wires.push({from:{nodeId:n7.id,port:0}, to:{nodeId:n8.id,port:0}});
+    rerenderAll();
+    log('Loaded: Factorial');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  CONSOLE LOG
+// ═══════════════════════════════════════════════════════════════════════════
+
+function log(msg) {
+  const el = document.getElementById('console');
+  const time = new Date().toLocaleTimeString();
+  el.innerHTML = `<div>[${time}] ${msg}</div>` + el.innerHTML;
+  if (el.children.length > 50) el.removeChild(el.lastChild);
+}
+
+// Initial state
+log('FLUX Visual Editor ready');
+log('Drag nodes from palette →');
+
+</script>
+</body>
+</html>
