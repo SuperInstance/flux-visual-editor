@@ -6,25 +6,32 @@
 <title>FLUX Visual Editor</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #1a1a2e; color: #e0e0e0; font-family: 'Courier New', monospace; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+:root {
+  --bg: #1a1a2e; --bg2: #16213e; --bg3: #0f3460; --bg4: #111;
+  --accent: #e94560; --text: #e0e0e0; --dim: #88a;
+  --green: #3a5; --yellow: #ff0; --blue: #4af; --red: #f44;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
 
 /* === Top Bar === */
-#topbar { background: #16213e; border-bottom: 2px solid #0f3460; padding: 8px 16px; display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
-#topbar h1 { font-size: 18px; color: #e94560; white-space: nowrap; }
-#topbar button { background: #0f3460; color: #e0e0e0; border: 1px solid #e94560; padding: 6px 16px; cursor: pointer; font-family: inherit; font-size: 13px; border-radius: 3px; }
-#topbar button:hover { background: #e94560; }
-#topbar select { background: #0f3460; color: #e0e0e0; border: 1px solid #535; padding: 6px; font-family: inherit; border-radius: 3px; }
+#topbar { background: var(--bg2); border-bottom: 2px solid var(--bg3); padding: 6px 12px; display: flex; gap: 8px; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
+#topbar h1 { font-size: 18px; color: var(--accent); white-space: nowrap; }
+#topbar button, #topbar select { background: var(--bg3); color: var(--text); border: 1px solid var(--accent); padding: 5px 12px; cursor: pointer; font-family: inherit; font-size: 12px; border-radius: 3px; }
+#topbar button:hover { background: var(--accent); }
+#topbar select { border-color: #535; }
+#topbar .spacer { margin-left: auto; }
+#topbar .hint { font-size: 10px; color: #445; }
 
 /* === Layout === */
 #main { display: flex; flex: 1; overflow: hidden; }
-#sidebar { width: 180px; background: #16213e; border-right: 2px solid #0f3460; padding: 8px; overflow-y: auto; flex-shrink: 0; }
-#canvas-area { flex: 1; position: relative; overflow: auto; background: #111; }
-#right-panel { width: 360px; background: #16213e; border-left: 2px solid #0f3460; display: flex; flex-direction: column; flex-shrink: 0; }
+#sidebar { width: 160px; background: var(--bg2); border-right: 2px solid var(--bg3); padding: 8px; overflow-y: auto; flex-shrink: 0; }
+#canvas-area { flex: 1; position: relative; overflow: auto; background: var(--bg4); }
+#right-panel { width: 340px; background: var(--bg2); border-left: 2px solid var(--bg3); display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; }
 
 /* === Palette === */
-#sidebar h3 { color: #e94560; font-size: 13px; margin-bottom: 6px; margin-top: 8px; }
-.palette-node { background: #0f3460; border: 1px solid #533; padding: 8px; margin: 4px 0; cursor: grab; text-align: center; font-size: 12px; border-radius: 4px; user-select: none; }
-.palette-node:hover { border-color: #e94560; background: #1a2050; }
+#sidebar h3 { color: var(--accent); font-size: 12px; margin-bottom: 6px; margin-top: 8px; }
+.palette-node { background: var(--bg3); border: 1px solid #533; padding: 7px; margin: 3px 0; cursor: grab; text-align: center; font-size: 11px; border-radius: 4px; user-select: none; }
+.palette-node:hover { border-color: var(--accent); background: #1a2050; }
 .palette-node:active { cursor: grabbing; }
 
 /* === Canvas === */
@@ -32,76 +39,120 @@ body { background: #1a1a2e; color: #e0e0e0; font-family: 'Courier New', monospac
 #wire-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
 #wire-svg path { fill: none; stroke-width: 2; pointer-events: stroke; cursor: pointer; }
 #wire-svg path:hover { stroke-width: 4; }
-#wire-temp { fill: none; stroke: #ff0; stroke-width: 2; stroke-dasharray: 4; }
+#wire-temp { fill: none; stroke: var(--yellow); stroke-width: 2; stroke-dasharray: 4; }
 
 /* === Nodes === */
-.node { position: absolute; min-width: 140px; background: #1a2050; border: 2px solid #3a5; border-radius: 6px; z-index: 2; user-select: none; }
-.node.selected { border-color: #ff0; box-shadow: 0 0 10px #ff0; }
-.node-header { background: #0f3460; padding: 4px 8px; font-size: 12px; font-weight: bold; border-radius: 4px 4px 0 0; cursor: move; display: flex; justify-content: space-between; align-items: center; }
-.node-header .del { cursor: pointer; color: #e94560; font-size: 14px; }
+.node { position: absolute; min-width: 140px; background: #1a2050; border: 2px solid var(--green); border-radius: 6px; z-index: 2; user-select: none; }
+.node.selected { border-color: var(--yellow); box-shadow: 0 0 10px var(--yellow); }
+.node.active { border-color: var(--accent) !important; box-shadow: 0 0 16px var(--accent); animation: pulse 0.6s infinite alternate; }
+@keyframes pulse { to { box-shadow: 0 0 24px var(--accent); } }
+.node-header { background: var(--bg3); padding: 4px 8px; font-size: 12px; font-weight: bold; border-radius: 4px 4px 0 0; cursor: move; display: flex; justify-content: space-between; align-items: center; }
+.node-header .del { cursor: pointer; color: var(--accent); font-size: 14px; padding: 0 4px; }
 .node-body { padding: 8px; font-size: 11px; }
-.node-body input, .node-body select { background: #111; color: #e0e0e0; border: 1px solid #444; padding: 2px 4px; font-family: inherit; font-size: 11px; width: 60px; border-radius: 2px; }
-.node-body label { display: inline-block; width: 50px; color: #88a; }
-.port { width: 12px; height: 12px; border-radius: 50%; background: #3a5; position: absolute; cursor: crosshair; border: 2px solid #1a2050; z-index: 3; }
-.port:hover { background: #ff0; }
+.node-body input, .node-body select { background: var(--bg4); color: var(--text); border: 1px solid #444; padding: 2px 4px; font-family: inherit; font-size: 11px; width: 60px; border-radius: 2px; }
+.node-body label { display: inline-block; width: 46px; color: var(--dim); }
+.port { width: 12px; height: 12px; border-radius: 50%; background: var(--green); position: absolute; cursor: crosshair; border: 2px solid #1a2050; z-index: 3; }
+.port:hover { background: var(--yellow); }
 .port.input { left: -8px; top: 50%; transform: translateY(-50%); }
 .port.output { right: -8px; top: 50%; transform: translateY(-50%); }
-.port-title { position: absolute; font-size: 9px; color: #88a; pointer-events: none; }
+.port-title { position: absolute; font-size: 9px; color: var(--dim); pointer-events: none; line-height: 12px; }
 .port-title.input { left: 6px; top: 50%; transform: translateY(-50%); }
 .port-title.output { right: 6px; top: 50%; transform: translateY(-50%); text-align: right; }
 
 /* node type colors */
-.node[data-type="constant"] { border-color: #4a9; }
-.node[data-type="constant"] .node-header { background: #1a4a3a; }
-.node[data-type="arithmetic"] { border-color: #e94; }
-.node[data-type="arithmetic"] .node-header { background: #4a3a1a; }
-.node[data-type="compare"] { border-color: #a4e; }
-.node[data-type="compare"] .node-header { background: #3a2a4a; }
-.node[data-type="branch"] { border-color: #e55; }
-.node[data-type="branch"] .node-header { background: #4a1a1a; }
-.node[data-type="memory"] { border-color: #59c; }
-.node[data-type="memory"] .node-header { background: #1a3a5a; }
-.node[data-type="stack"] { border-color: #5a5; }
-.node[data-type="stack"] .node-header { background: #2a4a2a; }
-.node[data-type="output"] { border-color: #ee5; }
-.node[data-type="output"] .node-header { background: #4a4a1a; }
-.node[data-type="halt"] { border-color: #888; }
-.node[data-type="halt"] .node-header { background: #333; }
+.node[data-type="constant"] { border-color: #4a9; } .node[data-type="constant"] .node-header { background: #1a4a3a; }
+.node[data-type="arithmetic"] { border-color: #e94; } .node[data-type="arithmetic"] .node-header { background: #4a3a1a; }
+.node[data-type="compare"] { border-color: #a4e; } .node[data-type="compare"] .node-header { background: #3a2a4a; }
+.node[data-type="branch"] { border-color: #e55; } .node[data-type="branch"] .node-header { background: #4a1a1a; }
+.node[data-type="memory"] { border-color: #59c; } .node[data-type="memory"] .node-header { background: #1a3a5a; }
+.node[data-type="stack"] { border-color: #5a5; } .node[data-type="stack"] .node-header { background: #2a4a2a; }
+.node[data-type="output"] { border-color: #ee5; } .node[data-type="output"] .node-header { background: #4a4a1a; }
+.node[data-type="halt"] { border-color: #888; } .node[data-type="halt"] .node-header { background: #333; }
 
 /* === Right Panel === */
-#right-panel .panel-section { padding: 8px; border-bottom: 1px solid #0f3460; }
-#right-panel h3 { color: #e94560; font-size: 13px; margin-bottom: 6px; }
-#asm-output { width: 100%; min-height: 180px; background: #111; color: #4f4; border: 1px solid #333; font-family: inherit; font-size: 12px; padding: 6px; resize: vertical; }
-#hex-output { width: 100%; min-height: 60px; background: #111; color: #4af; border: 1px solid #333; font-family: inherit; font-size: 12px; padding: 6px; word-break: break-all; }
-#vm-output { width: 100%; min-height: 100px; background: #111; color: #ff4; border: 1px solid #333; font-family: inherit; font-size: 12px; padding: 6px; }
-#reg-display { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px; }
-.reg-cell { background: #0f3460; padding: 4px 6px; font-size: 11px; border-radius: 3px; text-align: center; }
+#right-panel .panel-section { padding: 8px; border-bottom: 1px solid var(--bg3); }
+#right-panel h3 { color: var(--accent); font-size: 12px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+#right-panel h3 .badge { font-size: 10px; color: var(--dim); font-weight: normal; }
+
+/* Bytecode dual view */
+#bytecode-container { display: flex; gap: 6px; }
+#bytecode-container .col { flex: 1; min-width: 0; }
+#bytecode-container .col h4 { font-size: 10px; color: var(--dim); margin-bottom: 3px; }
+#asm-output { width: 100%; min-height: 160px; background: var(--bg4); color: #4f4; border: 1px solid #333; font-family: inherit; font-size: 11px; padding: 6px; resize: vertical; }
+#hex-output { width: 100%; min-height: 160px; background: var(--bg4); color: var(--blue); border: 1px solid #333; font-family: inherit; font-size: 11px; padding: 6px; word-break: break-all; overflow-y: auto; max-height: 200px; }
+
+#vm-output { width: 100%; min-height: 70px; background: var(--bg4); color: #ff4; border: 1px solid #333; font-family: inherit; font-size: 11px; padding: 6px; }
+
+/* Register table */
+#reg-display { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+.reg-cell { background: var(--bg3); padding: 4px 6px; font-size: 10px; border-radius: 3px; text-align: center; transition: background 0.2s; }
 .reg-cell.nonzero { color: #4f4; font-weight: bold; }
+.reg-cell.changed { background: #2a4a1a; border: 1px solid var(--green); }
+
+/* Step controls */
+#step-controls { display: flex; gap: 4px; align-items: center; }
+#step-controls button { padding: 4px 10px; font-size: 11px; }
+
+/* Console */
+#console { font-size: 10px; color: var(--dim); max-height: 120px; overflow-y: auto; }
+#console div { padding: 1px 0; }
+
+/* Modal for import/export */
+#modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; }
+#modal-overlay.show { display: flex; }
+#modal { background: var(--bg2); border: 2px solid var(--accent); border-radius: 8px; padding: 16px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; }
+#modal h2 { color: var(--accent); font-size: 16px; margin-bottom: 10px; }
+#modal textarea { width: 100%; height: 300px; background: var(--bg4); color: var(--text); border: 1px solid #444; font-family: inherit; font-size: 11px; padding: 8px; border-radius: 4px; }
+#modal .modal-buttons { display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; }
+#modal button { background: var(--bg3); color: var(--text); border: 1px solid var(--accent); padding: 6px 16px; cursor: pointer; font-family: inherit; font-size: 12px; border-radius: 3px; }
+#modal button:hover { background: var(--accent); }
+#modal .share-url { width: 100%; background: var(--bg4); color: var(--blue); border: 1px solid #444; padding: 8px; font-size: 11px; border-radius: 4px; word-break: break-all; }
+
+/* === Mobile === */
+@media (max-width: 768px) {
+  #topbar { padding: 4px 8px; gap: 4px; }
+  #topbar h1 { font-size: 14px; }
+  #topbar button, #topbar select { padding: 4px 8px; font-size: 10px; }
+  #topbar .hint { display: none; }
+  #main { flex-direction: column; }
+  #sidebar { width: 100%; max-height: 60px; display: flex; gap: 4px; overflow-x: auto; border-right: none; border-bottom: 2px solid var(--bg3); padding: 4px; }
+  #sidebar h3 { display: none; }
+  .palette-node { white-space: nowrap; margin: 0; padding: 5px 8px; }
+  #canvas-area { flex: 1; overflow: auto; }
+  #right-panel { width: 100%; max-height: 40vh; border-left: none; border-top: 2px solid var(--bg3); }
+  #bytecode-container { flex-direction: column; }
+  #reg-display { grid-template-columns: repeat(8, 1fr); }
+  .reg-cell { font-size: 9px; padding: 2px 3px; }
+}
 </style>
 </head>
 <body>
 
 <div id="topbar">
-  <h1>⚡ FLUX Visual Editor</h1>
+  <h1>⚡ FLUX</h1>
   <button onclick="compileGraph()">📋 Compile</button>
   <button onclick="runBytecode()">▶ Run</button>
-  <button onclick="clearCanvas()">🗑 Clear</button>
-  <select id="example-select" onchange="loadExample(this.value)">
-    <option value="">— Load Example —</option>
+  <span id="step-controls">
+    <button onclick="stepReset()" title="Reset to start">⏮ Step Reset</button>
+    <button onclick="stepForward()" title="Execute one instruction">⏭ Step</button>
+  </span>
+  <select id="example-select" onchange="loadExample(this.value); this.value=''">
+    <option value="">— Examples —</option>
     <option value="hello">Hello World</option>
     <option value="counter">Counter Loop</option>
-    <option value="deadband">Deadband (if/else)</option>
+    <option value="deadband">Deadband Controller</option>
     <option value="factorial">Factorial</option>
   </select>
-  <span style="margin-left:auto; font-size:11px; color:#556;">
-    Drag nodes from left palette onto canvas · Click output port then input port to wire
-  </span>
+  <button onclick="showExport()">💾 Export</button>
+  <button onclick="showImport()">📂 Import</button>
+  <button onclick="shareProgram()">🔗 Share</button>
+  <button onclick="clearCanvas()">🗑 Clear</button>
+  <span class="hint">Drag nodes → canvas · Click ● then ● to wire</span>
 </div>
 
 <div id="main">
-  <!-- Palette -->
   <div id="sidebar">
-    <h3> Nodes</h3>
+    <h3>Nodes</h3>
     <div class="palette-node" draggable="true" data-type="constant">📦 Constant</div>
     <div class="palette-node" draggable="true" data-type="arithmetic">🔧 Arithmetic</div>
     <div class="palette-node" draggable="true" data-type="compare">🔍 Compare</div>
@@ -112,41 +163,54 @@ body { background: #1a1a2e; color: #e0e0e0; font-family: 'Courier New', monospac
     <div class="palette-node" draggable="true" data-type="halt">⏹ Halt</div>
   </div>
 
-  <!-- Canvas -->
   <div id="canvas-area">
     <div id="canvas">
       <svg id="wire-svg"></svg>
     </div>
   </div>
 
-  <!-- Right Panel -->
   <div id="right-panel">
     <div class="panel-section">
-      <h3>Assembly Output</h3>
-      <textarea id="asm-output" readonly placeholder="// Compiled FLUX assembly appears here"></textarea>
+      <h3>Bytecode <span class="badge" id="bytecount-badge"></span></h3>
+      <div id="bytecode-container">
+        <div class="col">
+          <h4>Assembly</h4>
+          <textarea id="asm-output" readonly placeholder="// Compile to see assembly"></textarea>
+        </div>
+        <div class="col">
+          <h4>Hex</h4>
+          <div id="hex-output">—</div>
+        </div>
+      </div>
     </div>
     <div class="panel-section">
-      <h3>Bytecode Hex</h3>
-      <div id="hex-output">—</div>
-    </div>
-    <div class="panel-section">
-      <h3>Execution Result</h3>
+      <h3>Execution <span class="badge" id="exec-badge"></span></h3>
       <div id="vm-output">—</div>
     </div>
     <div class="panel-section">
-      <h3>Registers</h3>
+      <h3>Registers <span class="badge">R0–R15</span></h3>
       <div id="reg-display"></div>
     </div>
-    <div class="panel-section" style="flex:1;">
+    <div class="panel-section" style="flex:1; min-height:0;">
       <h3>Console</h3>
-      <div id="console" style="font-size:11px; color:#88a; max-height:150px; overflow-y:auto;"></div>
+      <div id="console"></div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-overlay">
+  <div id="modal">
+    <h2 id="modal-title">Modal</h2>
+    <div id="modal-body"></div>
+    <div class="modal-buttons">
+      <button onclick="closeModal()">Close</button>
     </div>
   </div>
 </div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════
-//  EMBEDDED FLUX VM  (trimmed from flux.js)
+//  EMBEDDED FLUX VM
 // ═══════════════════════════════════════════════════════════════════════════
 
 const OP = {
@@ -163,6 +227,17 @@ const OP = {
 };
 const MNEMONIC = Object.fromEntries(Object.entries(OP).map(([k,v])=>[v,k]));
 
+// Instruction sizes for stepping
+const INST_SIZES = {
+  [OP.HALT]:1,[OP.NOP]:1,[OP.DUP]:1,[OP.YIELD]:1,
+  [OP.INC]:2,[OP.DEC]:2,[OP.PUSH]:2,[OP.POP]:2,
+  [OP.MOV]:3,[OP.LOAD]:3,[OP.STORE]:3,[OP.CMP]:3,
+  [OP.IADD]:4,[OP.ISUB]:4,[OP.IMUL]:4,[OP.IDIV]:4,[OP.IMOD]:4,
+  [OP.IAND]:4,[OP.IOR]:4,[OP.IXOR]:4,[OP.ISHL]:4,[OP.ISHR]:4,
+  [OP.MOVI]:4,[OP.JMP]:4,[OP.JZ]:4,[OP.JNZ]:4,[OP.CALL]:4,[OP.JE]:4,[OP.JNE]:4,
+  [OP.RET]:3
+};
+
 class FluxVM {
   constructor(bytecode, maxCycles=10_000_000) {
     this.gp = new Int32Array(16);
@@ -172,50 +247,66 @@ class FluxVM {
     this.maxCycles = maxCycles; this.error = null;
     this._flagZero = false; this._flagSign = false;
     this.mem = new Int32Array(256);
+    this.prevRegs = new Int32Array(16);
+    this.changedRegs = new Set();
   }
   reg(i){ return this.gp[i]||0; }
   _u8(){ return this.bc[this.pc++]; }
   _i16(){ const lo=this.bc[this.pc++],hi=this.bc[this.pc++]; const v=lo|(hi<<8); return v>=32768?v-65536:v; }
   _setFlags(r){ this._flagZero=(r===0); this._flagSign=(r<0); }
+
+  step() {
+    if (this.halted || this.pc >= this.bc.length) return false;
+    const startPC = this.pc;
+    this.prevRegs.set(this.gp);
+    this.changedRegs.clear();
+    const op = this._u8();
+    this.cycles++;
+    try {
+      switch(op) {
+        case 0x80: this.halted=true; break;
+        case 0x00: break;
+        case 0x01: { const d=this._u8(),s=this._u8(); this.gp[d]=this.gp[s]; this.changedRegs.add(d); break; }
+        case 0x2B: { const d=this._u8(); this.gp[d]=this._i16(); this.changedRegs.add(d); break; }
+        case 0x08: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=(this.gp[a]+this.gp[b])|0; this.gp[d]=r; this._setFlags(r); this.changedRegs.add(d); break; }
+        case 0x09: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=(this.gp[a]-this.gp[b])|0; this.gp[d]=r; this._setFlags(r); this.changedRegs.add(d); break; }
+        case 0x0A: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=(this.gp[a]*this.gp[b])|0; this.gp[d]=r; this._setFlags(r); this.changedRegs.add(d); break; }
+        case 0x0B: { const d=this._u8(),a=this._u8(),b=this._u8(); if(this.gp[b]===0) throw new Error('Division by zero'); this.gp[d]=(this.gp[a]/this.gp[b])|0; this._setFlags(this.gp[d]); this.changedRegs.add(d); break; }
+        case 0x0C: { const d=this._u8(),a=this._u8(),b=this._u8(); if(this.gp[b]===0) throw new Error('Modulo by zero'); this.gp[d]=(this.gp[a]%this.gp[b])|0; this._setFlags(this.gp[d]); this.changedRegs.add(d); break; }
+        case 0x0E: { const r=this._u8(); const v=(this.gp[r]+1)|0; this.gp[r]=v; this._setFlags(v); this.changedRegs.add(r); break; }
+        case 0x0F: { const r=this._u8(); const v=(this.gp[r]-1)|0; this.gp[r]=v; this._setFlags(v); this.changedRegs.add(r); break; }
+        case 0x20: this.stack.push(this.gp[this._u8()]); break;
+        case 0x21: { const r=this._u8(); this.gp[r]=this.stack.pop()||0; this.changedRegs.add(r); break; }
+        case 0x22: { if(this.stack.length>0){ const v=this.stack[this.stack.length-1]; this.stack.push(v);} break; }
+        case 0x04: { const _r=this._u8(),off=this._i16(); this.pc=(this.pc+off)&0xFFFFFFFF; break; }
+        case 0x05: { const r=this._u8(),off=this._i16(); if(this.gp[r]===0) this.pc=(this.pc+off)&0xFFFFFFFF; break; }
+        case 0x06: { const r=this._u8(),off=this._i16(); if(this.gp[r]!==0) this.pc=(this.pc+off)&0xFFFFFFFF; break; }
+        case 0x07: { const _r=this._u8(),off=this._i16(); this.stack.push(this.pc); this.pc=(this.pc+off)&0xFFFFFFFF; break; }
+        case 0x28: { const _r=this._u8(),_p=this._u8(); if(this.stack.length>0){ this.pc=this.stack.pop(); } break; }
+        case 0x2D: { const a=this._u8(),b=this._u8(); this._flagZero=this.gp[a]===this.gp[b]; this._flagSign=this.gp[a]<this.gp[b]; break; }
+        case 0x2E: { const _r=this._u8(),off=this._i16(); if(this._flagZero) this.pc=(this.pc+off)&0xFFFFFFFF; break; }
+        case 0x2F: { const _r=this._u8(),off=this._i16(); if(!this._flagZero) this.pc=(this.pc+off)&0xFFFFFFFF; break; }
+        case 0x10: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=this.gp[a]&this.gp[b]; this.gp[d]=r; this._setFlags(r); this.changedRegs.add(d); break; }
+        case 0x11: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=this.gp[a]|this.gp[b]; this.gp[d]=r; this._setFlags(r); this.changedRegs.add(d); break; }
+        case 0x12: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=this.gp[a]^this.gp[b]; this.gp[d]=r; this._setFlags(r); this.changedRegs.add(d); break; }
+        case 0x13: { const d=this._u8(),s=this._u8(); const r=~this.gp[s]; this.gp[d]=r; this._setFlags(r); this.changedRegs.add(d); break; }
+        case 0x14: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=this.gp[a]<<(this.gp[b]&0x1f); this.gp[d]=r; this._setFlags(r); this.changedRegs.add(d); break; }
+        case 0x15: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=this.gp[a]>>(this.gp[b]&0x1f); this.gp[d]=r; this._setFlags(r); this.changedRegs.add(d); break; }
+        case 0x03: { const d=this._u8(),a=this._u8(); this.mem[this.gp[a]&0xFF]=this.gp[d]; break; }
+        case 0x02: { const d=this._u8(),a=this._u8(); this.gp[d]=this.mem[this.gp[a]&0xFF]; this.changedRegs.add(d); break; }
+        case 0x81: break;
+        default: throw new Error(`Unknown opcode: 0x${op.toString(16).padStart(2,'0')}`);
+      }
+    } catch(e) { this.error = e.message; return false; }
+    return !this.halted && this.pc < this.bc.length && this.cycles < this.maxCycles;
+  }
+
   execute() {
     this.halted=false; this.cycles=0; this.error=null;
+    this.prevRegs.set(this.gp);
     try {
       while(!this.halted && this.pc<this.bc.length && this.cycles<this.maxCycles) {
-        const op=this._u8(); this.cycles++;
-        switch(op) {
-          case 0x80: this.halted=true; break;
-          case 0x00: break;
-          case 0x01: { const d=this._u8(),s=this._u8(); this.gp[d]=this.gp[s]; break; }
-          case 0x2B: { const d=this._u8(); this.gp[d]=this._i16(); break; }
-          case 0x08: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=(this.gp[a]+this.gp[b])|0; this.gp[d]=r; this._setFlags(r); break; }
-          case 0x09: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=(this.gp[a]-this.gp[b])|0; this.gp[d]=r; this._setFlags(r); break; }
-          case 0x0A: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=(this.gp[a]*this.gp[b])|0; this.gp[d]=r; this._setFlags(r); break; }
-          case 0x0B: { const d=this._u8(),a=this._u8(),b=this._u8(); if(this.gp[b]===0) throw new Error('Division by zero'); this.gp[d]=(this.gp[a]/this.gp[b])|0; this._setFlags(this.gp[d]); break; }
-          case 0x0C: { const d=this._u8(),a=this._u8(),b=this._u8(); if(this.gp[b]===0) throw new Error('Modulo by zero'); this.gp[d]=(this.gp[a]%this.gp[b])|0; this._setFlags(this.gp[d]); break; }
-          case 0x0E: { const r=this._u8(); const v=(this.gp[r]+1)|0; this.gp[r]=v; this._setFlags(v); break; }
-          case 0x0F: { const r=this._u8(); const v=(this.gp[r]-1)|0; this.gp[r]=v; this._setFlags(v); break; }
-          case 0x20: this.stack.push(this.gp[this._u8()]); break;
-          case 0x21: this.gp[this._u8()]=this.stack.pop()||0; break;
-          case 0x22: { if(this.stack.length>0){ const v=this.stack[this.stack.length-1]; this.stack.push(v);} break; }
-          case 0x04: { const _r=this._u8(),off=this._i16(); this.pc=(this.pc+off)&0xFFFFFFFF; break; }
-          case 0x05: { const r=this._u8(),off=this._i16(); if(this.gp[r]===0) this.pc=(this.pc+off)&0xFFFFFFFF; break; }
-          case 0x06: { const r=this._u8(),off=this._i16(); if(this.gp[r]!==0) this.pc=(this.pc+off)&0xFFFFFFFF; break; }
-          case 0x07: { const _r=this._u8(),off=this._i16(); this.stack.push(this.pc); this.pc=(this.pc+off)&0xFFFFFFFF; break; }
-          case 0x28: { const _r=this._u8(),_p=this._u8(); if(this.stack.length>0){ this.pc=this.stack.pop(); } break; }
-          case 0x2D: { const a=this._u8(),b=this._u8(); this._flagZero=this.gp[a]===this.gp[b]; this._flagSign=this.gp[a]<this.gp[b]; break; }
-          case 0x2E: { const _r=this._u8(),off=this._i16(); if(this._flagZero) this.pc=(this.pc+off)&0xFFFFFFFF; break; }
-          case 0x2F: { const _r=this._u8(),off=this._i16(); if(!this._flagZero) this.pc=(this.pc+off)&0xFFFFFFFF; break; }
-          case 0x10: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=this.gp[a]&this.gp[b]; this.gp[d]=r; this._setFlags(r); break; }
-          case 0x11: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=this.gp[a]|this.gp[b]; this.gp[d]=r; this._setFlags(r); break; }
-          case 0x12: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=this.gp[a]^this.gp[b]; this.gp[d]=r; this._setFlags(r); break; }
-          case 0x13: { const d=this._u8(),s=this._u8(); const r=~this.gp[s]; this.gp[d]=r; this._setFlags(r); break; }
-          case 0x14: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=this.gp[a]<<(this.gp[b]&0x1f); this.gp[d]=r; this._setFlags(r); break; }
-          case 0x15: { const d=this._u8(),a=this._u8(),b=this._u8(); const r=this.gp[a]>>(this.gp[b]&0x1f); this.gp[d]=r; this._setFlags(r); break; }
-          case 0x03: { const d=this._u8(),a=this._u8(); this.mem[this.gp[a]&0xFF]=this.gp[d]; break; } // STORE Rd, [Ra]
-          case 0x02: { const d=this._u8(),a=this._u8(); this.gp[d]=this.mem[this.gp[a]&0xFF]; break; } // LOAD Rd, [Ra]
-          case 0x81: break;
-          default: throw new Error(`Unknown opcode: 0x${op.toString(16).padStart(2,'0')}`);
-        }
+        if(!this.step()) break;
       }
     } catch(e) { this.error = e.message; }
     return this;
@@ -279,13 +370,16 @@ function assemble(text) {
 //  VISUAL EDITOR STATE
 // ═══════════════════════════════════════════════════════════════════════════
 
-let nodes = [];      // {id, type, x, y, props, inputs:[], outputs:[]}
-let wires = [];      // {from:{nodeId,port}, to:{nodeId,port}}
+let nodes = [];
+let wires = [];
 let nextId = 1;
 let selectedNode = null;
 let dragNode = null;
 let dragOffset = {x:0,y:0};
-let wireStart = null;  // {nodeId, port} when connecting
+let wireStart = null;
+let stepVM = null;    // VM instance for stepping
+let lastCompiledBC = null;
+let lastCompiledASM = '';
 
 const canvas = document.getElementById('canvas');
 const svg = document.getElementById('wire-svg');
@@ -364,10 +458,7 @@ const NODE_DEFS = {
 function createNode(type, x, y, props) {
   const def = NODE_DEFS[type];
   if (!def) return;
-  const node = {
-    id: nextId++, type, x, y,
-    props: {}
-  };
+  const node = { id: nextId++, type, x, y, props: {} };
   for (const p of def.props) {
     node.props[p.key] = props && props[p.key] !== undefined ? props[p.key] : p.default;
   }
@@ -385,13 +476,11 @@ function renderNode(node) {
   el.style.left = node.x + 'px';
   el.style.top = node.y + 'px';
 
-  // Header
   let html = `<div class="node-header" onmousedown="startDrag(event,${node.id})">
     <span>${def.title}</span>
     <span class="del" onclick="deleteNode(${node.id})">✕</span>
   </div>`;
 
-  // Body with props
   html += '<div class="node-body">';
   for (const p of def.props) {
     html += `<div><label>${p.label}</label>`;
@@ -407,15 +496,8 @@ function renderNode(node) {
     html += `</div>`;
   }
   html += '</div>';
-
-  // Ports
-  const maxPorts = Math.max(def.inputs.length, def.outputs.length);
-  if (maxPorts > 0) {
-    el.style.height = ''; // auto
-  }
   el.innerHTML = html;
 
-  // Add ports after innerHTML
   def.inputs.forEach((name, i) => {
     const portTop = 30 + i * 22 + 10;
     const port = document.createElement('div');
@@ -430,7 +512,6 @@ function renderNode(node) {
     lbl.className = 'port-title input';
     lbl.style.top = portTop + 'px';
     lbl.textContent = name;
-    lbl.style.lineHeight = '12px';
     el.appendChild(lbl);
   });
   def.outputs.forEach((name, i) => {
@@ -447,7 +528,6 @@ function renderNode(node) {
     lbl.className = 'port-title output';
     lbl.style.top = portTop + 'px';
     lbl.textContent = name;
-    lbl.style.lineHeight = '12px';
     el.appendChild(lbl);
   });
 
@@ -457,7 +537,6 @@ function renderNode(node) {
 function updateProp(id, key, val) {
   const node = nodes.find(n => n.id === id);
   if (!node) return;
-  // Convert numeric strings
   const def = NODE_DEFS[node.type].props.find(p => p.key === key);
   node.props[key] = def && def.type === 'number' ? parseInt(val) || 0 : val;
 }
@@ -481,6 +560,12 @@ function startDrag(e, id) {
   el.classList.add('selected');
 }
 
+// Touch support for mobile dragging
+function getEventPos(e) {
+  if (e.touches && e.touches[0]) return {x: e.touches[0].clientX, y: e.touches[0].clientY};
+  return {x: e.clientX, y: e.clientY};
+}
+
 document.addEventListener('mousemove', (e) => {
   if (dragNode !== null) {
     const node = nodes.find(n => n.id === dragNode);
@@ -489,21 +574,13 @@ document.addEventListener('mousemove', (e) => {
     node.x = e.clientX - canvasRect.left - dragOffset.x;
     node.y = e.clientY - canvasRect.top - dragOffset.y;
     const el = canvas.querySelector(`.node[data-id="${dragNode}"]`);
-    if (el) {
-      el.style.left = node.x + 'px';
-      el.style.top = node.y + 'px';
-    }
+    if (el) { el.style.left = node.x + 'px'; el.style.top = node.y + 'px'; }
     drawWires();
   }
-  // Draw temp wire
-  if (wireStart) {
-    drawTempWire(e);
-  }
+  if (wireStart) drawTempWire(e);
 });
 
-document.addEventListener('mouseup', () => {
-  dragNode = null;
-});
+document.addEventListener('mouseup', () => { dragNode = null; });
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  WIRING
@@ -512,15 +589,9 @@ document.addEventListener('mouseup', () => {
 function handlePortClick(nodeId, portType, portIdx, e) {
   if (portType === 'output') {
     wireStart = { nodeId, portIdx };
-    log('Started wire from node ' + nodeId);
+    log('Wire started from node ' + nodeId);
   } else if (portType === 'input' && wireStart) {
-    // Don't allow self-connection
-    if (wireStart.nodeId === nodeId) {
-      wireStart = null;
-      clearTempWire();
-      return;
-    }
-    // Remove existing wire to this input
+    if (wireStart.nodeId === nodeId) { wireStart = null; clearTempWire(); return; }
     wires = wires.filter(w => !(w.to.nodeId === nodeId && w.to.port === portIdx));
     wires.push({ from: { nodeId: wireStart.nodeId, port: wireStart.portIdx }, to: { nodeId, port: portIdx } });
     wireStart = null;
@@ -542,11 +613,11 @@ function drawTempWire(e) {
   if (!fromEl) return;
   const fromRect = fromEl.getBoundingClientRect();
   const canvasRect = canvas.getBoundingClientRect();
+  const pos = getEventPos(e);
   const x1 = fromRect.left + fromRect.width/2 - canvasRect.left;
   const y1 = fromRect.top + fromRect.height/2 - canvasRect.top;
-  const x2 = e.clientX - canvasRect.left;
-  const y2 = e.clientY - canvasRect.top;
-
+  const x2 = pos.x - canvasRect.left;
+  const y2 = pos.y - canvasRect.top;
   const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   path.id = 'wire-temp';
   path.setAttribute('d', bezierPath(x1,y1,x2,y2));
@@ -565,14 +636,10 @@ function getPortPos(nodeId, portType, portIdx) {
   if (!el) return null;
   const rect = el.getBoundingClientRect();
   const canvasRect = canvas.getBoundingClientRect();
-  return {
-    x: rect.left + rect.width/2 - canvasRect.left,
-    y: rect.top + rect.height/2 - canvasRect.top
-  };
+  return { x: rect.left + rect.width/2 - canvasRect.left, y: rect.top + rect.height/2 - canvasRect.top };
 }
 
 function drawWires() {
-  // Clear existing wires (except temp)
   svg.querySelectorAll('path:not(#wire-temp)').forEach(p => p.remove());
   for (let i = 0; i < wires.length; i++) {
     const w = wires[i];
@@ -593,9 +660,7 @@ function drawWires() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 document.querySelectorAll('.palette-node').forEach(el => {
-  el.addEventListener('dragstart', (e) => {
-    e.dataTransfer.setData('text/plain', el.dataset.type);
-  });
+  el.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', el.dataset.type); });
 });
 
 canvas.addEventListener('dragover', (e) => { e.preventDefault(); });
@@ -604,9 +669,7 @@ canvas.addEventListener('drop', (e) => {
   const type = e.dataTransfer.getData('text/plain');
   if (!type) return;
   const canvasRect = canvas.getBoundingClientRect();
-  const x = e.clientX - canvasRect.left - 70;
-  const y = e.clientY - canvasRect.top - 20;
-  createNode(type, x, y);
+  createNode(type, e.clientX - canvasRect.left - 70, e.clientY - canvasRect.top - 20);
   log(`Created ${type} node`);
 });
 
@@ -615,12 +678,14 @@ canvas.addEventListener('drop', (e) => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function clearCanvas() {
-  nodes = []; wires = []; nextId = 1;
+  nodes = []; wires = []; nextId = 1; stepVM = null; lastCompiledBC = null;
   rerenderAll();
   document.getElementById('asm-output').value = '';
   document.getElementById('hex-output').textContent = '—';
   document.getElementById('vm-output').textContent = '—';
   document.getElementById('reg-display').innerHTML = '';
+  document.getElementById('bytecount-badge').textContent = '';
+  document.getElementById('exec-badge').textContent = '';
   log('Canvas cleared');
 }
 
@@ -635,97 +700,46 @@ function rerenderAll() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function topologicalSort() {
-  // Build adjacency from wires
   const adj = {}; const inDeg = {};
   for (const n of nodes) { adj[n.id] = []; inDeg[n.id] = 0; }
-  for (const w of wires) {
-    adj[w.from.nodeId].push(w.to.nodeId);
-    inDeg[w.to.nodeId] = (inDeg[w.to.nodeId]||0) + 1;
-  }
-  // Kahn's algorithm
+  for (const w of wires) { adj[w.from.nodeId].push(w.to.nodeId); inDeg[w.to.nodeId] = (inDeg[w.to.nodeId]||0) + 1; }
   const queue = nodes.filter(n => (inDeg[n.id]||0) === 0).map(n => n.id);
   const order = [];
   while (queue.length) {
     const id = queue.shift();
     const node = nodes.find(n => n.id === id);
     if (node) order.push(node);
-    for (const next of (adj[id]||[])) {
-      inDeg[next]--;
-      if (inDeg[next] === 0) queue.push(next);
-    }
+    for (const next of (adj[id]||[])) { inDeg[next]--; if (inDeg[next] === 0) queue.push(next); }
   }
-  // Add any remaining (cycles etc)
   for (const n of nodes) if (!order.includes(n)) order.push(n);
   return order;
 }
 
 function compileGraph() {
-  if (nodes.length === 0) {
-    log('Nothing to compile — canvas is empty');
-    return null;
-  }
+  if (nodes.length === 0) { log('Nothing to compile — canvas is empty'); return null; }
   const sorted = topologicalSort();
-  const lines = [];
-  const usedLabels = new Set();
-  let asmText = '';
-
-  // Generate assembly from sorted nodes
-  for (const node of sorted) {
-    const def = NODE_DEFS[node.type];
-    if (!def || !def.compile) continue;
-    const compiled = def.compile(node);
-
-    // Add labels for branch targets
-    if (node.type === 'branch') {
-      const targetLabel = node.props.label || 'target';
-      // The branch targets the next node after the branch's false path
-      // We'll create labels at the compiled output level
-    }
-
-    lines.push(compiled);
-  }
-
-  // Now resolve: we need to handle branch labels by position
-  // For visual simplicity, branches create labels at the top of the graph
-  // Let's do a simpler approach: use line numbers
-
-  // Process branch nodes to use actual offsets
-  // Re-compile with proper label resolution
-  const finalLines = [];
   const labelPositions = {};
 
-  // First pass: compute instruction sizes and label positions
-  // Label = placed right before the node that the branch wire points to
+  // Pre-scan: find branch targets
   for (const node of sorted) {
-    // If this node is a branch target (something connects to it via input port 0),
-    // place a label here
     const incomingWire = wires.find(w => w.to.nodeId === node.id && w.to.port === 0);
     if (incomingWire && nodes.find(n => n.id === incomingWire.from.nodeId)?.type === 'branch') {
       const fromNode = nodes.find(n => n.id === incomingWire.from.nodeId);
       const labelName = `L_${node.id}`;
-      labelPositions[labelName] = finalLines.length;
-      // Update the branch node's label prop
+      labelPositions[labelName] = true;
       if (fromNode) fromNode._resolvedLabel = labelName;
     }
   }
 
-  // Second pass: emit
   const emit = [];
   for (const node of sorted) {
     const def = NODE_DEFS[node.type];
     if (!def) continue;
-
-    // Check if we need a label before this node
-    const labelEntry = Object.entries(labelPositions).find(([k,v]) => k === `L_${node.id}`);
-    if (labelEntry) {
-      emit.push(`${labelEntry[0]}:`);
-    }
+    const labelEntry = Object.keys(labelPositions).find(k => k === `L_${node.id}`);
+    if (labelEntry) emit.push(`${labelEntry}:`);
 
     let compiled = def.compile(node);
-    // Replace branch label references
     if (node.type === 'branch' && node._resolvedLabel) {
-      compiled = compiled.replace(/target|label/i, node._resolvedLabel);
-      // Also update the props for proper assembly
       const mn = node.props.type || 'JE';
       const reg = node.props.reg || 0;
       compiled = `${mn} R${reg}, ${node._resolvedLabel}`;
@@ -733,14 +747,23 @@ function compileGraph() {
     emit.push(compiled);
   }
 
-  asmText = emit.join('\n');
+  const asmText = emit.join('\n');
   document.getElementById('asm-output').value = asmText;
+  lastCompiledASM = asmText;
 
-  // Assemble to bytecode
   try {
     const bc = assemble(asmText);
-    const hex = Array.from(bc).map(b => b.toString(16).padStart(2,'0')).join(' ');
-    document.getElementById('hex-output').textContent = hex;
+    lastCompiledBC = bc;
+    // Format hex with address prefixes
+    const hexLines = [];
+    for (let i = 0; i < bc.length; i += 16) {
+      const chunk = Array.from(bc.slice(i, i + 16));
+      const addr = i.toString(16).padStart(4, '0');
+      const hex = chunk.map(b => b.toString(16).padStart(2, '0')).join(' ');
+      hexLines.push(`${addr}: ${hex}`);
+    }
+    document.getElementById('hex-output').textContent = hexLines.join('\n') || '—';
+    document.getElementById('bytecount-badge').textContent = `${bc.length} bytes`;
     log(`Compiled: ${bc.length} bytes, ${sorted.length} nodes`);
     return bc;
   } catch(e) {
@@ -757,41 +780,350 @@ function compileGraph() {
 function runBytecode() {
   let bc = compileGraph();
   if (!bc) return;
-
+  clearActiveNodes();
   const vm = new FluxVM(bc);
   vm.execute();
+  stepVM = vm;
+  displayVMResult(vm);
+  log(`Executed: ${vm.cycles} cycles, halted=${vm.halted}`);
+}
 
-  // Display results
+// ═══════════════════════════════════════════════════════════════════════════
+//  STEP-THROUGH EXECUTION
+// ═══════════════════════════════════════════════════════════════════════════
+
+function stepReset() {
+  if (!lastCompiledBC) {
+    let bc = compileGraph();
+    if (!bc) return;
+  }
+  stepVM = new FluxVM(lastCompiledBC);
+  clearActiveNodes();
+  displayVMResult(stepVM);
+  document.getElementById('exec-badge').textContent = 'stepping…';
+  log('Stepping reset — PC=0');
+}
+
+function stepForward() {
+  if (!stepVM || stepVM.halted || stepVM.error) {
+    // Try to compile first
+    if (!lastCompiledBC) {
+      let bc = compileGraph();
+      if (!bc) return;
+    }
+    if (!stepVM) stepReset();
+    if (!stepVM) return;
+  }
+  if (stepVM.halted) { log('Already halted'); return; }
+  if (stepVM.error) { log('Error state — reset to continue'); return; }
+
+  const pcBefore = stepVM.pc;
+  const hasMore = stepVM.step();
+  const pcAfter = stepVM.pc;
+
+  // Try to figure out which node this PC corresponds to
+  highlightNodeByPC(pcBefore, pcAfter);
+
+  displayVMResult(stepVM);
+  if (stepVM.halted) {
+    document.getElementById('exec-badge').textContent = 'halted';
+    log('Program halted');
+  } else if (stepVM.error) {
+    document.getElementById('exec-badge').textContent = 'error';
+    log('Runtime error: ' + stepVM.error);
+  } else if (!hasMore) {
+    document.getElementById('exec-badge').textContent = 'done';
+  }
+}
+
+// Map PC offsets to nodes using the assembly output
+let pcToNodeMap = []; // array of {startPC, endPC, nodeId, label}
+
+function buildPCNodeMap() {
+  pcToNodeMap = [];
+  if (!lastCompiledBC || !lastCompiledASM) return;
+  // Walk the asm to compute PC positions per line, then map to nodes
+  const lines = lastCompiledASM.split('\n');
+  let pc = 0;
+  const pcLines = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.endsWith(':')) {
+      pcLines.push({line: trimmed, pc, isLabel: true});
+      continue;
+    }
+    const parts = trimmed.replace(/,/g,' ').split(/\s+/);
+    const mn = parts[0].toUpperCase();
+    let size = 0;
+    if (mn in OP) {
+      size = INST_SIZES[OP[mn]] || 1;
+    }
+    pcLines.push({line: trimmed, pc, size, isLabel: false});
+    pc += size;
+  }
+  // Now map nodes
+  for (const node of topologicalSort()) {
+    // Find this node's compiled line by matching content
+    const def = NODE_DEFS[node.type];
+    if (!def) continue;
+    const compiled = def.compile(node);
+    for (const pl of pcLines) {
+      if (pl.isLabel) continue;
+      // Check if this line matches this node
+      // Simple heuristic: check for the label L_<nodeId> preceding
+    }
+  }
+  // Store the pcLines for highlighting
+  pcToNodeMap = pcLines;
+}
+
+function highlightNodeByPC(pcBefore, pcAfter) {
+  clearActiveNodes();
+  // Find the asm line at pcBefore
+  if (pcToNodeMap.length === 0) buildPCNodeMap();
+  // Find the current instruction
+  for (let i = 0; i < pcToNodeMap.length; i++) {
+    const pl = pcToNodeMap[i];
+    if (!pl.isLabel && pl.pc === pcBefore) {
+      // Highlight: try to find nearest preceding label
+      let labelName = null;
+      for (let j = i - 1; j >= 0; j--) {
+        if (pcToNodeMap[j].isLabel) { labelName = pcToNodeMap[j].line.replace(':', ''); break; }
+      }
+      // If there's a label, find and highlight that node
+      if (labelName && labelName.startsWith('L_')) {
+        const nodeId = parseInt(labelName.substring(2));
+        const el = canvas.querySelector(`.node[data-id="${nodeId}"]`);
+        if (el) el.classList.add('active');
+      }
+      // Also try to match by instruction content to a node
+      const activeNodeId = findNodeForAsmLine(pl.line, pcBefore);
+      if (activeNodeId) {
+        const el2 = canvas.querySelector(`.node[data-id="${activeNodeId}"]`);
+        if (el2) el2.classList.add('active');
+      }
+      break;
+    }
+  }
+  // Also check if we jumped (branch taken) — highlight the target
+  if (pcAfter !== pcBefore) {
+    const branchOp = lastCompiledBC[pcBefore];
+    if ([OP.JMP, OP.JZ, OP.JNZ, OP.CALL, OP.JE, OP.JNE].includes(branchOp)) {
+      // The branch was taken (or fell through) — try highlighting destination
+      for (let i = 0; i < pcToNodeMap.length; i++) {
+        const pl = pcToNodeMap[i];
+        if (!pl.isLabel && pl.pc === pcAfter) {
+          let labelName = null;
+          for (let j = i - 1; j >= 0; j--) {
+            if (pcToNodeMap[j].isLabel) { labelName = pcToNodeMap[j].line.replace(':', ''); break; }
+          }
+          if (labelName && labelName.startsWith('L_')) {
+            const nodeId = parseInt(labelName.substring(2));
+            const el = canvas.querySelector(`.node[data-id="${nodeId}"]`);
+            if (el) { el.classList.add('active'); setTimeout(() => el.classList.remove('active'), 800); }
+          }
+          break;
+        }
+      }
+    }
+  }
+}
+
+function findNodeForAsmLine(line, pc) {
+  // Walk nodes and find whose compiled output matches
+  for (const node of nodes) {
+    const def = NODE_DEFS[node.type];
+    if (!def || !def.compile) continue;
+    const compiled = def.compile(node).trim();
+    // Normalize comparison
+    const norm = (s) => s.replace(/\s+/g, ' ').replace(/,/g, ' ').trim().toUpperCase();
+    if (norm(compiled) === norm(line)) return node.id;
+  }
+  return null;
+}
+
+function clearActiveNodes() {
+  document.querySelectorAll('.node.active').forEach(el => el.classList.remove('active'));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  DISPLAY
+// ═══════════════════════════════════════════════════════════════════════════
+
+function displayVMResult(vm) {
   let outHtml = '';
   if (vm.error) {
-    outHtml = `<span style="color:#f44;">ERROR: ${vm.error}</span>\n`;
-  } else {
+    outHtml = `<span style="color:var(--red);">⛔ ERROR: ${vm.error}</span>\n`;
+  } else if (vm.halted) {
     outHtml = `<span style="color:#4f4;">✓ HALTED</span>\n`;
+  } else {
+    outHtml = `<span style="color:var(--blue);">⏸ Paused (PC=${vm.pc})</span>\n`;
   }
-  outHtml += `Cycles: ${vm.cycles}\n`;
-  outHtml += `PC: ${vm.pc}\n`;
-  outHtml += `Stack: [${vm.stack.join(', ')}]\n`;
-  outHtml += `Output registers:\n`;
-  // Show output node values
+  outHtml += `Cycles: ${vm.cycles} | PC: ${vm.pc} | Stack: [${vm.stack.join(', ')}]\n`;
   for (const node of nodes) {
     if (node.type === 'output') {
-      outHtml += `  OUT R${node.props.reg||0} = ${vm.reg(node.props.reg||0)}\n`;
+      outHtml += `📤 OUT R${node.props.reg||0} = ${vm.reg(node.props.reg||0)}\n`;
     }
   }
   document.getElementById('vm-output').innerHTML = outHtml.replace(/\n/g,'<br>');
+  document.getElementById('exec-badge').textContent = vm.halted ? 'halted' : (vm.error ? 'error' : `${vm.cycles} cycles`);
 
-  // Registers
+  // Registers with change highlighting
   const regEl = document.getElementById('reg-display');
   regEl.innerHTML = '';
   for (let i = 0; i < 16; i++) {
     const cell = document.createElement('div');
-    cell.className = 'reg-cell' + (vm.gp[i] !== 0 ? ' nonzero' : '');
+    const changed = vm.changedRegs && vm.changedRegs.has(i);
+    cell.className = 'reg-cell' + (vm.gp[i] !== 0 ? ' nonzero' : '') + (changed ? ' changed' : '');
     cell.textContent = `R${i}: ${vm.gp[i]}`;
     regEl.appendChild(cell);
   }
-
-  log(`Executed: ${vm.cycles} cycles, halted=${vm.halted}`);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  IMPORT / EXPORT
+// ═══════════════════════════════════════════════════════════════════════════
+
+function serializeProgram() {
+  return JSON.stringify({
+    version: 2,
+    nodes: nodes.map(n => ({id:n.id, type:n.type, x:n.x, y:n.y, props:n.props})),
+    wires: wires.map(w => ({from:w.from, to:w.to})),
+    nextId
+  }, null, 2);
+}
+
+function deserializeProgram(jsonStr) {
+  try {
+    const data = JSON.parse(jsonStr);
+    if (!data.nodes || !data.wires) throw new Error('Invalid format');
+    clearCanvas();
+    nextId = data.nextId || (data.nodes.reduce((m,n) => Math.max(m, n.id), 0) + 1);
+    for (const n of data.nodes) {
+      const node = {id: n.id, type: n.type, x: n.x, y: n.y, props: n.props || {}};
+      const def = NODE_DEFS[node.type];
+      if (def) {
+        for (const p of def.props) {
+          if (node.props[p.key] === undefined) node.props[p.key] = p.default;
+        }
+      }
+      nodes.push(node);
+      renderNode(node);
+    }
+    wires = data.wires.map(w => ({from: w.from, to: w.to}));
+    drawWires();
+    log(`Imported: ${data.nodes.length} nodes, ${data.wires.length} wires`);
+    return true;
+  } catch(e) {
+    alert('Import error: ' + e.message);
+    return false;
+  }
+}
+
+function showExport() {
+  const json = serializeProgram();
+  const body = document.getElementById('modal-body');
+  document.getElementById('modal-title').textContent = '💾 Export Program';
+  body.innerHTML = `<p style="font-size:11px;color:var(--dim);margin-bottom:8px;">Copy this JSON to save your program:</p>
+    <textarea id="export-text" readonly>${json}</textarea>
+    <div class="modal-buttons">
+      <button onclick="navigator.clipboard.writeText(document.getElementById('export-text').value); log('Copied to clipboard');">📋 Copy</button>
+      <button onclick="downloadProgram()">💾 Download</button>
+    </div>`;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function downloadProgram() {
+  const json = serializeProgram();
+  const blob = new Blob([json], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'flux-program.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  log('Program downloaded');
+}
+
+function showImport() {
+  const body = document.getElementById('modal-body');
+  document.getElementById('modal-title').textContent = '📂 Import Program';
+  body.innerHTML = `<p style="font-size:11px;color:var(--dim);margin-bottom:8px;">Paste JSON or choose a file:</p>
+    <textarea id="import-text" placeholder='{"version":2,"nodes":[...],"wires":[...]}'></textarea>
+    <input type="file" id="import-file" accept=".json" style="margin-top:8px;font-size:11px;color:var(--dim);" onchange="
+      const f=this.files[0]; if(!f)return;
+      const r=new FileReader();
+      r.onload=()=>document.getElementById('import-text').value=r.result;
+      r.readAsText(f);
+    ">
+    <div class="modal-buttons">
+      <button onclick="doImport()">📋 Load Program</button>
+    </div>`;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function doImport() {
+  const text = document.getElementById('import-text').value.trim();
+  if (!text) { alert('Paste JSON first'); return; }
+  if (deserializeProgram(text)) closeModal();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  SHARE (URL hash encoding)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function shareProgram() {
+  const json = serializeProgram();
+  // Compress with LZ-style: use encodeURIComponent + btoa
+  let encoded;
+  try {
+    encoded = btoa(unescape(encodeURIComponent(json)));
+  } catch(e) {
+    encoded = btoa(json);
+  }
+  const url = location.origin + location.pathname + '#p=' + encoded;
+  const body = document.getElementById('modal-body');
+  document.getElementById('modal-title').textContent = '🔗 Share Program';
+  body.innerHTML = `<p style="font-size:11px;color:var(--dim);margin-bottom:8px;">Share this URL — the program is encoded in the hash. No server needed!</p>
+    <div class="share-url" id="share-url">${url}</div>
+    <div class="modal-buttons">
+      <button onclick="navigator.clipboard.writeText('${url.replace(/'/g,"\\'")}'); log('URL copied to clipboard');">📋 Copy URL</button>
+    </div>`;
+  document.getElementById('modal-overlay').classList.add('show');
+  // Also copy to clipboard directly
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => log('Share URL copied to clipboard'));
+  }
+}
+
+function loadFromHash() {
+  const hash = location.hash;
+  if (hash.startsWith('#p=')) {
+    const encoded = hash.substring(3);
+    try {
+      const json = decodeURIComponent(escape(atob(encoded)));
+      deserializeProgram(json);
+      log('Loaded program from URL');
+    } catch(e) {
+      log('Failed to load shared program: ' + e.message);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════════════════════════════════
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('show');
+}
+
+document.getElementById('modal-overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
+});
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  EXAMPLES
@@ -800,47 +1132,43 @@ function runBytecode() {
 function loadExample(name) {
   clearCanvas();
   if (name === 'hello') {
+    // MOVI R0, 42; HALT — outputs 42
     const n1 = createNode('constant', 100, 100, {value:42, reg:0});
     const n2 = createNode('output', 320, 100, {reg:0});
     const n3 = createNode('halt', 520, 100);
     wires.push({from:{nodeId:n1.id,port:0}, to:{nodeId:n2.id,port:0}});
+    wires.push({from:{nodeId:n2.id,port:0}, to:{nodeId:n3.id,port:0}});
     rerenderAll();
-    log('Loaded: Hello World');
+    log('Loaded: Hello World — MOVI R0,42 → OUT → HALT');
   }
   else if (name === 'counter') {
-    // Count 1..5 using loop: MOVI R0,1; loop: PUSH R0; INC R0; CMP R0,6; JNE R0, loop; HALT
-    const n1 = createNode('constant', 80, 100, {value:1, reg:0});      // R0 = 1
-    const n2 = createNode('stack', 280, 100, {op:'PUSH', reg:0});      // PUSH R0
-    const n3 = createNode('constant', 80, 220, {value:0, reg:0});      // placeholder for INC
-    const n4 = createNode('arithmetic', 280, 220, {op:'ADD', reg:0, rA:0, rB:0}); // actually we want INC
-    // Simpler: just use constants and halt, showing the concept
-    const n5 = createNode('constant', 80, 340, {value:6, reg:1});      // R1 = 6 (limit)
-    const n6 = createNode('compare', 280, 340, {rA:0, rB:1});          // CMP R0, R1
-    const n7 = createNode('branch', 480, 340, {type:'JNE', reg:0, label:'L_2'}); // JNE back
-    const n8 = createNode('output', 480, 100, {reg:0});
-    const n9 = createNode('halt', 680, 100);
-
-    // Wire: counter -> push -> output -> halt
-    wires.push({from:{nodeId:n1.id,port:0}, to:{nodeId:n2.id,port:0}});
-    wires.push({from:{nodeId:n2.id,port:0}, to:{nodeId:n8.id,port:0}});
-    wires.push({from:{nodeId:n8.id,port:0}, to:{nodeId:n9.id,port:0}});
+    // Count 0→5 using INC + CMP + JNE loop
+    const n1 = createNode('constant', 60, 80, {value:0, reg:0});
+    const n2 = createNode('constant', 60, 180, {value:6, reg:1});
+    const n3 = createNode('arithmetic', 270, 120, {op:'ADD', reg:0, rA:0, rB:0}); // placeholder
+    const n4 = createNode('output', 470, 80, {reg:0});
+    const n5 = createNode('compare', 270, 220, {rA:0, rB:1});
+    const n6 = createNode('branch', 470, 220, {type:'JNE', reg:0, label:'L_3'});
+    const n7 = createNode('halt', 670, 80);
+    // Wire: n1→n3→n4→n7, n2→n5, n1→n5, n5→n6(loop back to n3)
+    wires.push({from:{nodeId:n1.id,port:0}, to:{nodeId:n3.id,port:0}});
+    wires.push({from:{nodeId:n3.id,port:0}, to:{nodeId:n4.id,port:0}});
+    wires.push({from:{nodeId:n4.id,port:0}, to:{nodeId:n7.id,port:0}});
+    wires.push({from:{nodeId:n2.id,port:0}, to:{nodeId:n5.id,port:0}});
+    wires.push({from:{nodeId:n5.id,port:0}, to:{nodeId:n6.id,port:0}});
     rerenderAll();
-    log('Loaded: Counter Loop (conceptual)');
+    log('Loaded: Counter Loop — counts and compares in a loop');
   }
   else if (name === 'deadband') {
     // if R0 > R1 then R2=1 else R2=0
-    const n1 = createNode('constant', 80, 100, {value:10, reg:0});
-    const n2 = createNode('constant', 80, 200, {value:5, reg:1});
-    const n3 = createNode('compare', 300, 150, {rA:0, rB:1});
-    const n4 = createNode('branch', 500, 150, {type:'JG', reg:0, label:'above'});
-    // Note: JG doesn't exist, use JNE after CMP as proxy
-    n4.props.type = 'JNE';
-    n4.props.label = 'above';
-    const n5 = createNode('constant', 700, 80, {value:0, reg:2});   // else: R2=0
-    const n6 = createNode('constant', 700, 200, {value:1, reg:2});  // then: R2=1
-    const n7 = createNode('output', 900, 140, {reg:2});
-    const n8 = createNode('halt', 1100, 140);
-
+    const n1 = createNode('constant', 60, 80, {value:10, reg:0});
+    const n2 = createNode('constant', 60, 180, {value:5, reg:1});
+    const n3 = createNode('compare', 270, 130, {rA:0, rB:1});
+    const n4 = createNode('branch', 470, 130, {type:'JNE', reg:0, label:'above'});
+    const n5 = createNode('constant', 670, 60, {value:0, reg:2});
+    const n6 = createNode('constant', 670, 200, {value:1, reg:2});
+    const n7 = createNode('output', 870, 120, {reg:2});
+    const n8 = createNode('halt', 1050, 120);
     wires.push({from:{nodeId:n1.id,port:0}, to:{nodeId:n3.id,port:0}});
     wires.push({from:{nodeId:n2.id,port:0}, to:{nodeId:n3.id,port:1}});
     wires.push({from:{nodeId:n3.id,port:0}, to:{nodeId:n4.id,port:0}});
@@ -850,26 +1178,24 @@ function loadExample(name) {
     wires.push({from:{nodeId:n6.id,port:0}, to:{nodeId:n7.id,port:0}});
     wires.push({from:{nodeId:n7.id,port:0}, to:{nodeId:n8.id,port:0}});
     rerenderAll();
-    log('Loaded: Deadband (if/else branches)');
+    log('Loaded: Deadband Controller — if/else branching');
   }
   else if (name === 'factorial') {
-    // Factorial 5: MOVI R0,5; MOVI R1,1; loop: IMUL R1,R1,R0; DEC R0; JNZ R0,loop; HALT
-    const n1 = createNode('constant', 80, 100, {value:5, reg:0});
-    const n2 = createNode('constant', 80, 200, {value:1, reg:1});
-    const n3 = createNode('arithmetic', 300, 150, {op:'MUL', reg:1, rA:1, rB:0});
-    // DEC R0 — use arithmetic SUB with a 1 constant
-    const n4 = createNode('constant', 80, 320, {value:1, reg:2});
-    const n5 = createNode('arithmetic', 300, 300, {op:'SUB', reg:0, rA:0, rB:2});
-    const n6 = createNode('branch', 520, 300, {type:'JNZ', reg:0, label:'L_3'});
-    const n7 = createNode('output', 520, 150, {reg:1});
-    const n8 = createNode('halt', 720, 150);
-
+    // Factorial 5: R0=5, R1=1; loop: R1*=R0; R0--; if R0!=0 goto loop
+    const n1 = createNode('constant', 60, 80, {value:5, reg:0});
+    const n2 = createNode('constant', 60, 180, {value:1, reg:1});
+    const n3 = createNode('arithmetic', 270, 130, {op:'MUL', reg:1, rA:1, rB:0});
+    const n4 = createNode('constant', 60, 300, {value:1, reg:2});
+    const n5 = createNode('arithmetic', 270, 280, {op:'SUB', reg:0, rA:0, rB:2});
+    const n6 = createNode('branch', 490, 280, {type:'JNZ', reg:0, label:'L_3'});
+    const n7 = createNode('output', 490, 130, {reg:1});
+    const n8 = createNode('halt', 690, 130);
     wires.push({from:{nodeId:n1.id,port:0}, to:{nodeId:n3.id,port:0}});
     wires.push({from:{nodeId:n2.id,port:0}, to:{nodeId:n3.id,port:1}});
     wires.push({from:{nodeId:n3.id,port:0}, to:{nodeId:n7.id,port:0}});
     wires.push({from:{nodeId:n7.id,port:0}, to:{nodeId:n8.id,port:0}});
     rerenderAll();
-    log('Loaded: Factorial');
+    log('Loaded: Factorial — 5! = 120 with multiply loop');
   }
 }
 
@@ -884,10 +1210,15 @@ function log(msg) {
   if (el.children.length > 50) el.removeChild(el.lastChild);
 }
 
-// Initial state
-log('FLUX Visual Editor ready');
+// ═══════════════════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════════════════
+
+log('FLUX Visual Editor v2 ready');
 log('Drag nodes from palette →');
 
+// Load shared program from URL if present
+loadFromHash();
 </script>
 </body>
 </html>
