@@ -5,12 +5,114 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate HTML
+      - name: Validate HTML structure
         run: |
           if [ -f index.html ]; then
             echo "index.html exists"
-            # Basic validation
             grep -q "<html" index.html
             grep -q "</html>" index.html
+            grep -q "FluxVM" index.html
+            grep -q "NODE_DEFS" index.html
+            grep -q "compileGraph" index.html
             echo "HTML structure OK"
+          else
+            echo "ERROR: index.html not found"
+            exit 1
           fi
+      - name: Check required node types
+        run: |
+          for type in budget gate decision llm room io constant comparator; do
+            if grep -q "\"$type\"" index.html; then
+              echo "  ✓ $type node found"
+            else
+              echo "  ✗ MISSING: $type node"
+              exit 1
+            fi
+          done
+      - name: Check examples
+        run: |
+          for ex in token_budget rate_limiter room_entry; do
+            if grep -q "$ex" index.html; then
+              echo "  ✓ $ex example found"
+            else
+              echo "  ✗ MISSING: $ex example"
+              exit 1
+            fi
+          done
+      - name: Check features
+        run: |
+          grep -q "downloadBin" index.html && echo "  ✓ Download .bin"
+          grep -q "updateLedger" index.html && echo "  ✓ Conservation ledger"
+          grep -q "Conservation Ledger" index.html && echo "  ✓ Ledger panel"
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run FLUX VM tests
+        run: |
+          node -e "
+            const fs = require('fs');
+            const html = fs.readFileSync('index.html', 'utf8');
+            const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/);
+            const code = scriptMatch[1];
+            const opStart = code.indexOf('const OP = {');
+            const veStart = code.indexOf('//  VISUAL EDITOR STATE');
+            const coreCode = code.substring(opStart, veStart);
+            const ndStart = code.indexOf('const NODE_DEFS = {');
+            const ndEnd = code.indexOf('//  NODE CREATION');
+            const ndCode = code.substring(ndStart, ndEnd);
+            const testCode = coreCode + '\n' + ndCode + '\nmodule.exports = { OP, MNEMONIC, FluxVM, assemble, NODE_DEFS, INST_SIZES };';
+            fs.writeFileSync('/tmp/flux_extracted.js', testCode);
+
+            const { FluxVM, assemble, NODE_DEFS } = require('/tmp/flux_extracted.js');
+            let passed = 0, failed = 0;
+            function assert(name, cond) {
+              if (cond) { passed++; console.log('  ✓ ' + name); }
+              else { failed++; console.log('  ✗ FAIL: ' + name); }
+            }
+            console.log('\n═══ FLUX VM Tests ═══');
+
+            { const bc = assemble('MOVI R0, 42\nHALT'); const vm = new FluxVM(bc); vm.execute();
+              assert('MOVI R0,42 → R0=42', vm.reg(0) === 42); assert('VM halts', vm.halted === true); }
+            { const bc = assemble('MOVI R0, 10\nMOVI R1, 20\nIADD R2, R0, R1\nHALT'); const vm = new FluxVM(bc); vm.execute();
+              assert('10 + 20 = 30', vm.reg(2) === 30); }
+            { const bc = assemble('MOVI R0, 50\nMOVI R1, 20\nISUB R2, R0, R1\nHALT'); const vm = new FluxVM(bc); vm.execute();
+              assert('50 - 20 = 30', vm.reg(2) === 30); }
+            { const bc = assemble('MOVI R0, 6\nMOVI R1, 7\nIMUL R2, R0, R1\nHALT'); const vm = new FluxVM(bc); vm.execute();
+              assert('6 × 7 = 42', vm.reg(2) === 42); }
+            { const bc = assemble('MOVI R0, 99\nMOVI R1, 50\nSTORE R0, R1\nMOVI R0, 0\nLOAD R0, R1\nHALT'); const vm = new FluxVM(bc); vm.execute();
+              assert('Store/Load memory', vm.reg(0) === 99); }
+            { const bc = assemble('MOVI R0, 7\nPUSH R0\nMOVI R0, 0\nPOP R0\nHALT'); const vm = new FluxVM(bc); vm.execute();
+              assert('Push/Pop stack', vm.reg(0) === 7); }
+            { const asm = 'MOVI R0, 5\nMOVI R1, 5\nCMP R0, R1\nJE R0, equal\nMOVI R2, 0\nHALT\nequal:\nMOVI R2, 1\nHALT'; const bc = assemble(asm); const vm = new FluxVM(bc); vm.execute();
+              assert('CMP + JE (equal → branch taken)', vm.reg(2) === 1); }
+            { const asm = 'MOVI R0, 5\nMOVI R1, 9\nCMP R0, R1\nJE R0, equal\nMOVI R2, 99\nHALT\nequal:\nMOVI R2, 1\nHALT'; const bc = assemble(asm); const vm = new FluxVM(bc); vm.execute();
+              assert('CMP + JE (not equal → fall through)', vm.reg(2) === 99); }
+            { const bc = assemble('MOVI R0, 41\nINC R0\nHALT'); const vm = new FluxVM(bc); vm.execute();
+              assert('INC R0 (41→42)', vm.reg(0) === 42); }
+            { const asm = 'MOVI R0, 5\nMOVI R1, 1\nloop:\nIMUL R1, R1, R0\nMOVI R2, 1\nISUB R0, R0, R2\nJNZ R0, loop\nHALT'; const bc = assemble(asm); const vm = new FluxVM(bc); vm.execute();
+              assert('Factorial 5! = 120', vm.reg(1) === 120); }
+            assert('Budget node defined', !!NODE_DEFS.budget);
+            assert('Gate node defined', !!NODE_DEFS.gate);
+            assert('Decision node defined', !!NODE_DEFS.decision);
+            assert('LLM node defined', !!NODE_DEFS.llm);
+            assert('Room node defined', !!NODE_DEFS.room);
+            assert('IO node defined', !!NODE_DEFS.io);
+            assert('Constant node defined', !!NODE_DEFS.constant);
+            assert('Comparator node defined', !!NODE_DEFS.comparator);
+            { const n = {id:1,type:'budget',props:{name:'t',type:'tokens',limit:500,reg:0,addr:100}}; const c = NODE_DEFS.budget.compile(n);
+              assert('Budget compiles to MOVI+STORE', c.includes('MOVI') && c.includes('STORE')); }
+            { const n = {id:2,type:'gate',props:{budgetAddr:100,cost:5,reg:0}}; const c = NODE_DEFS.gate.compile(n);
+              assert('Gate compiles with CMP', c.includes('CMP')); }
+            { const n = {id:3,type:'llm',props:{model:'t',maxTok:128,temp:5,reg:0}}; const c = NODE_DEFS.llm.compile(n);
+              assert('LLM compiles with bounded tokens', c.includes('128')); }
+            { const n = {id:4,type:'room',props:{action:'enter',room:'t',reg:0}}; const c = NODE_DEFS.room.compile(n);
+              assert('Room compiles with action', c.includes('enter') || c.includes('ROOM')); }
+
+            console.log('\n═══ Results: ' + passed + ' passed, ' + failed + ' failed ═══');
+            process.exit(failed > 0 ? 1 : 0);
+          "

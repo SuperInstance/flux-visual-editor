@@ -3,124 +3,326 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FLUX Visual Editor</title>
+<title>FLUX Visual Editor — SuperInstance</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
-  --bg: #1a1a2e; --bg2: #16213e; --bg3: #0f3460; --bg4: #111;
-  --accent: #e94560; --text: #e0e0e0; --dim: #88a;
-  --green: #3a5; --yellow: #ff0; --blue: #4af; --red: #f44;
+  --bg: #0d1117; --bg2: #161b22; --bg3: #21262d; --bg4: #0a0e14;
+  --accent: #e94560; --accent2: #f0883e;
+  --text: #e6edf3; --dim: #8b949e; --dimmer: #484f58;
+  --green: #3fb950; --yellow: #d29922; --blue: #58a6ff; --red: #f85149;
+  --purple: #bc8cff; --cyan: #39d2c0; --pink: #f778ba;
+  --border: #30363d; --border-light: #6e7681;
+  --node-bg: #11161c;
+  --shadow: 0 2px 8px rgba(0,0,0,0.4);
+  --radius: 6px;
 }
-body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  overflow: hidden; height: 100vh; display: flex; flex-direction: column;
+}
 
 /* === Top Bar === */
-#topbar { background: var(--bg2); border-bottom: 2px solid var(--bg3); padding: 6px 12px; display: flex; gap: 8px; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
-#topbar h1 { font-size: 18px; color: var(--accent); white-space: nowrap; }
-#topbar button, #topbar select { background: var(--bg3); color: var(--text); border: 1px solid var(--accent); padding: 5px 12px; cursor: pointer; font-family: inherit; font-size: 12px; border-radius: 3px; }
-#topbar button:hover { background: var(--accent); }
-#topbar select { border-color: #535; }
+#topbar {
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  padding: 8px 16px; display: flex; gap: 6px; align-items: center;
+  flex-shrink: 0; flex-wrap: wrap; box-shadow: var(--shadow); z-index: 10;
+}
+#topbar .brand {
+  font-size: 18px; font-weight: 700; color: var(--accent);
+  white-space: nowrap; display: flex; align-items: center; gap: 6px;
+}
+#topbar .brand .sub { font-size: 11px; color: var(--dim); font-weight: 400; }
+#topbar .divider { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+#topbar button {
+  background: var(--bg3); color: var(--text); border: 1px solid var(--border);
+  padding: 6px 14px; cursor: pointer; font-family: inherit; font-size: 12px;
+  border-radius: var(--radius); transition: all 0.15s; font-weight: 500;
+}
+#topbar button:hover { border-color: var(--accent); background: #1c2331; }
+#topbar button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+#topbar button.primary:hover { background: #ff5577; }
+#topbar button.success { background: #1a4a2a; border-color: var(--green); color: var(--green); }
+#topbar button.success:hover { background: #256b3a; }
+#topbar select {
+  background: var(--bg3); color: var(--text); border: 1px solid var(--border);
+  padding: 6px 10px; cursor: pointer; font-family: inherit; font-size: 12px;
+  border-radius: var(--radius);
+}
 #topbar .spacer { margin-left: auto; }
-#topbar .hint { font-size: 10px; color: #445; }
+#topbar .hint { font-size: 11px; color: var(--dimmer); }
 
 /* === Layout === */
 #main { display: flex; flex: 1; overflow: hidden; }
-#sidebar { width: 160px; background: var(--bg2); border-right: 2px solid var(--bg3); padding: 8px; overflow-y: auto; flex-shrink: 0; }
-#canvas-area { flex: 1; position: relative; overflow: auto; background: var(--bg4); }
-#right-panel { width: 340px; background: var(--bg2); border-left: 2px solid var(--bg3); display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; }
+#sidebar {
+  width: 180px; background: var(--bg2); border-right: 1px solid var(--border);
+  padding: 10px; overflow-y: auto; flex-shrink: 0;
+}
+#sidebar h3 {
+  color: var(--dim); font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.08em; margin: 12px 0 6px 0; font-weight: 600;
+}
+#sidebar h3:first-child { margin-top: 0; }
+#canvas-area {
+  flex: 1; position: relative; overflow: auto; background: var(--bg4);
+}
+#right-panel {
+  width: 360px; background: var(--bg2); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto;
+}
 
 /* === Palette === */
-#sidebar h3 { color: var(--accent); font-size: 12px; margin-bottom: 6px; margin-top: 8px; }
-.palette-node { background: var(--bg3); border: 1px solid #533; padding: 7px; margin: 3px 0; cursor: grab; text-align: center; font-size: 11px; border-radius: 4px; user-select: none; }
-.palette-node:hover { border-color: var(--accent); background: #1a2050; }
+.palette-node {
+  background: var(--bg3); border: 1px solid var(--border);
+  padding: 8px 10px; margin: 3px 0; cursor: grab; text-align: left;
+  font-size: 12px; border-radius: var(--radius); user-select: none;
+  transition: all 0.15s; display: flex; align-items: center; gap: 8px;
+}
+.palette-node:hover { border-color: var(--accent); background: #1c2331; transform: translateX(2px); }
 .palette-node:active { cursor: grabbing; }
+.palette-node .icon { font-size: 14px; }
+.palette-node .label { font-weight: 500; }
+.palette-node .sub { font-size: 9px; color: var(--dimmer); margin-top: 2px; }
 
 /* === Canvas === */
-#canvas { position: relative; width: 3000px; height: 2000px; background-image: radial-gradient(circle, #222 1px, transparent 1px); background-size: 20px 20px; }
-#wire-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
-#wire-svg path { fill: none; stroke-width: 2; pointer-events: stroke; cursor: pointer; }
+#canvas {
+  position: relative; width: 4000px; height: 3000px;
+  background-image:
+    radial-gradient(circle, #1a2030 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+#wire-svg {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 1;
+}
+#wire-svg path { fill: none; stroke-width: 2; pointer-events: stroke; cursor: pointer; transition: stroke-width 0.15s; }
 #wire-svg path:hover { stroke-width: 4; }
-#wire-temp { fill: none; stroke: var(--yellow); stroke-width: 2; stroke-dasharray: 4; }
+#wire-temp { fill: none; stroke: var(--yellow); stroke-width: 2; stroke-dasharray: 5; }
 
 /* === Nodes === */
-.node { position: absolute; min-width: 140px; background: #1a2050; border: 2px solid var(--green); border-radius: 6px; z-index: 2; user-select: none; }
-.node.selected { border-color: var(--yellow); box-shadow: 0 0 10px var(--yellow); }
-.node.active { border-color: var(--accent) !important; box-shadow: 0 0 16px var(--accent); animation: pulse 0.6s infinite alternate; }
-@keyframes pulse { to { box-shadow: 0 0 24px var(--accent); } }
-.node-header { background: var(--bg3); padding: 4px 8px; font-size: 12px; font-weight: bold; border-radius: 4px 4px 0 0; cursor: move; display: flex; justify-content: space-between; align-items: center; }
-.node-header .del { cursor: pointer; color: var(--accent); font-size: 14px; padding: 0 4px; }
-.node-body { padding: 8px; font-size: 11px; }
-.node-body input, .node-body select { background: var(--bg4); color: var(--text); border: 1px solid #444; padding: 2px 4px; font-family: inherit; font-size: 11px; width: 60px; border-radius: 2px; }
-.node-body label { display: inline-block; width: 46px; color: var(--dim); }
-.port { width: 12px; height: 12px; border-radius: 50%; background: var(--green); position: absolute; cursor: crosshair; border: 2px solid #1a2050; z-index: 3; }
-.port:hover { background: var(--yellow); }
-.port.input { left: -8px; top: 50%; transform: translateY(-50%); }
-.port.output { right: -8px; top: 50%; transform: translateY(-50%); }
-.port-title { position: absolute; font-size: 9px; color: var(--dim); pointer-events: none; line-height: 12px; }
-.port-title.input { left: 6px; top: 50%; transform: translateY(-50%); }
-.port-title.output { right: 6px; top: 50%; transform: translateY(-50%); text-align: right; }
+.node {
+  position: absolute; min-width: 160px; background: var(--node-bg);
+  border: 2px solid var(--border-light); border-radius: var(--radius);
+  z-index: 2; user-select: none; box-shadow: var(--shadow);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.node:hover { border-color: var(--dim); }
+.node.selected { border-color: var(--yellow); box-shadow: 0 0 0 2px rgba(210,153,34,0.3); }
+.node.active { border-color: var(--accent) !important; box-shadow: 0 0 20px rgba(233,69,96,0.5); animation: pulse 0.6s infinite alternate; }
+@keyframes pulse { to { box-shadow: 0 0 30px rgba(233,69,96,0.7); } }
 
-/* node type colors */
-.node[data-type="constant"] { border-color: #4a9; } .node[data-type="constant"] .node-header { background: #1a4a3a; }
-.node[data-type="arithmetic"] { border-color: #e94; } .node[data-type="arithmetic"] .node-header { background: #4a3a1a; }
-.node[data-type="compare"] { border-color: #a4e; } .node[data-type="compare"] .node-header { background: #3a2a4a; }
-.node[data-type="branch"] { border-color: #e55; } .node[data-type="branch"] .node-header { background: #4a1a1a; }
-.node[data-type="memory"] { border-color: #59c; } .node[data-type="memory"] .node-header { background: #1a3a5a; }
-.node[data-type="stack"] { border-color: #5a5; } .node[data-type="stack"] .node-header { background: #2a4a2a; }
-.node[data-type="output"] { border-color: #ee5; } .node[data-type="output"] .node-header { background: #4a4a1a; }
-.node[data-type="halt"] { border-color: #888; } .node[data-type="halt"] .node-header { background: #333; }
+.node-header {
+  padding: 6px 10px; font-size: 12px; font-weight: 600;
+  border-radius: 4px 4px 0 0; cursor: move; display: flex;
+  justify-content: space-between; align-items: center;
+}
+.node-header .del { cursor: pointer; color: var(--dimmer); font-size: 14px; padding: 0 4px; transition: color 0.15s; }
+.node-header .del:hover { color: var(--red); }
+.node-body { padding: 8px; font-size: 11px; }
+.node-body input, .node-body select {
+  background: var(--bg4); color: var(--text); border: 1px solid var(--border);
+  padding: 3px 6px; font-family: inherit; font-size: 11px; border-radius: 3px;
+  outline: none; transition: border-color 0.15s;
+}
+.node-body input:focus, .node-body select:focus { border-color: var(--blue); }
+.node-body label { display: inline-block; width: 52px; color: var(--dim); font-size: 10px; }
+.node-body .row { margin-bottom: 4px; }
+
+.port {
+  width: 14px; height: 14px; border-radius: 50%;
+  position: absolute; cursor: crosshair; z-index: 3;
+  border: 2px solid var(--node-bg); transition: transform 0.1s;
+}
+.port:hover { transform: scale(1.3); }
+.port.input { left: -9px; }
+.port.output { right: -9px; }
+.port-title {
+  position: absolute; font-size: 9px; color: var(--dim);
+  pointer-events: none; line-height: 14px; white-space: nowrap;
+}
+
+/* Node type colors */
+.node[data-type="constant"] { border-color: #3fb950; }
+.node[data-type="constant"] .node-header { background: rgba(63,185,80,0.12); color: var(--green); }
+.node[data-type="constant"] .port { background: var(--green); }
+
+.node[data-type="comparator"] { border-color: #bc8cff; }
+.node[data-type="comparator"] .node-header { background: rgba(188,140,255,0.12); color: var(--purple); }
+.node[data-type="comparator"] .port { background: var(--purple); }
+
+.node[data-type="budget"] { border-color: var(--accent2); }
+.node[data-type="budget"] .node-header { background: rgba(240,136,62,0.12); color: var(--accent2); }
+.node[data-type="budget"] .port { background: var(--accent2); }
+
+.node[data-type="gate"] { border-color: var(--red); }
+.node[data-type="gate"] .node-header { background: rgba(248,81,73,0.12); color: var(--red); }
+.node[data-type="gate"] .port { background: var(--red); }
+
+.node[data-type="decision"] { border-color: var(--yellow); }
+.node[data-type="decision"] .node-header { background: rgba(210,153,34,0.12); color: var(--yellow); }
+.node[data-type="decision"] .port { background: var(--yellow); }
+
+.node[data-type="llm"] { border-color: var(--cyan); }
+.node[data-type="llm"] .node-header { background: rgba(57,210,192,0.12); color: var(--cyan); }
+.node[data-type="llm"] .port { background: var(--cyan); }
+
+.node[data-type="room"] { border-color: var(--pink); }
+.node[data-type="room"] .node-header { background: rgba(247,120,186,0.12); color: var(--pink); }
+.node[data-type="room"] .port { background: var(--pink); }
+
+.node[data-type="io"] { border-color: var(--blue); }
+.node[data-type="io"] .node-header { background: rgba(88,166,255,0.12); color: var(--blue); }
+.node[data-type="io"] .port { background: var(--blue); }
+
+/* Legacy node types */
+.node[data-type="arithmetic"] { border-color: var(--accent2); }
+.node[data-type="arithmetic"] .node-header { background: rgba(240,136,62,0.12); color: var(--accent2); }
+.node[data-type="arithmetic"] .port { background: var(--accent2); }
+
+.node[data-type="branch"] { border-color: var(--yellow); }
+.node[data-type="branch"] .node-header { background: rgba(210,153,34,0.12); color: var(--yellow); }
+.node[data-type="branch"] .port { background: var(--yellow); }
+
+.node[data-type="memory"] { border-color: var(--blue); }
+.node[data-type="memory"] .node-header { background: rgba(88,166,255,0.12); color: var(--blue); }
+.node[data-type="memory"] .port { background: var(--blue); }
+
+.node[data-type="stack"] { border-color: var(--green); }
+.node[data-type="stack"] .node-header { background: rgba(63,185,80,0.12); color: var(--green); }
+.node[data-type="stack"] .port { background: var(--green); }
+
+.node[data-type="output"] { border-color: var(--dim); }
+.node[data-type="output"] .node-header { background: rgba(139,148,158,0.12); color: var(--dim); }
+.node[data-type="output"] .port { background: var(--dim); }
+
+.node[data-type="halt"] { border-color: var(--dimmer); }
+.node[data-type="halt"] .node-header { background: rgba(72,79,88,0.12); color: var(--dimmer); }
+.node[data-type="halt"] .port { background: var(--dimmer); }
 
 /* === Right Panel === */
-#right-panel .panel-section { padding: 8px; border-bottom: 1px solid var(--bg3); }
-#right-panel h3 { color: var(--accent); font-size: 12px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
-#right-panel h3 .badge { font-size: 10px; color: var(--dim); font-weight: normal; }
+#right-panel .panel-section {
+  padding: 10px 12px; border-bottom: 1px solid var(--border);
+}
+#right-panel h3 {
+  color: var(--dim); font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.08em; margin-bottom: 8px; font-weight: 600;
+  display: flex; justify-content: space-between; align-items: center;
+}
+#right-panel h3 .badge {
+  font-size: 10px; color: var(--dimmer); font-weight: 400;
+  text-transform: none; letter-spacing: 0;
+}
+#asm-output {
+  width: 100%; min-height: 180px; background: var(--bg4); color: var(--green);
+  border: 1px solid var(--border); font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: 11px; padding: 8px; border-radius: 4px; resize: vertical; line-height: 1.5;
+}
+#hex-output {
+  width: 100%; min-height: 80px; max-height: 120px; overflow-y: auto;
+  background: var(--bg4); color: var(--blue);
+  border: 1px solid var(--border); font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: 10px; padding: 8px; border-radius: 4px; word-break: break-all;
+  margin-top: 6px;
+}
+#vm-output {
+  width: 100%; min-height: 60px; background: var(--bg4);
+  border: 1px solid var(--border); font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 11px; padding: 8px; border-radius: 4px; color: var(--yellow);
+  line-height: 1.5;
+}
 
-/* Bytecode dual view */
-#bytecode-container { display: flex; gap: 6px; }
-#bytecode-container .col { flex: 1; min-width: 0; }
-#bytecode-container .col h4 { font-size: 10px; color: var(--dim); margin-bottom: 3px; }
-#asm-output { width: 100%; min-height: 160px; background: var(--bg4); color: #4f4; border: 1px solid #333; font-family: inherit; font-size: 11px; padding: 6px; resize: vertical; }
-#hex-output { width: 100%; min-height: 160px; background: var(--bg4); color: var(--blue); border: 1px solid #333; font-family: inherit; font-size: 11px; padding: 6px; word-break: break-all; overflow-y: auto; max-height: 200px; }
-
-#vm-output { width: 100%; min-height: 70px; background: var(--bg4); color: #ff4; border: 1px solid #333; font-family: inherit; font-size: 11px; padding: 6px; }
+/* Conservation Ledger */
+#ledger-output {
+  background: var(--bg4); border: 1px solid var(--border);
+  border-radius: 4px; padding: 8px; font-size: 11px; min-height: 40px;
+}
+.ledger-entry {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 0; border-bottom: 1px solid rgba(48,54,61,0.5);
+}
+.ledger-entry:last-child { border-bottom: none; }
+.ledger-entry .lname { color: var(--accent2); font-weight: 500; }
+.ledger-entry .ltype { color: var(--dim); font-size: 9px; text-transform: uppercase; }
+.ledger-entry .lval { color: var(--green); font-family: monospace; }
+.ledger-empty { color: var(--dimmer); font-style: italic; text-align: center; padding: 8px; }
 
 /* Register table */
-#reg-display { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
-.reg-cell { background: var(--bg3); padding: 4px 6px; font-size: 10px; border-radius: 3px; text-align: center; transition: background 0.2s; }
-.reg-cell.nonzero { color: #4f4; font-weight: bold; }
-.reg-cell.changed { background: #2a4a1a; border: 1px solid var(--green); }
+#reg-display { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.reg-cell {
+  background: var(--bg3); padding: 4px 6px; font-size: 10px;
+  border-radius: 3px; text-align: center; font-family: monospace;
+  transition: background 0.2s; border: 1px solid transparent;
+}
+.reg-cell.nonzero { color: var(--green); font-weight: 600; }
+.reg-cell.changed { background: rgba(63,185,80,0.15); border-color: var(--green); }
+
+/* Console */
+#console {
+  font-size: 10px; color: var(--dim); max-height: 140px; overflow-y: auto;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+#console div { padding: 1px 0; line-height: 1.4; }
+#console .log-time { color: var(--dimmer); }
 
 /* Step controls */
 #step-controls { display: flex; gap: 4px; align-items: center; }
-#step-controls button { padding: 4px 10px; font-size: 11px; }
 
-/* Console */
-#console { font-size: 10px; color: var(--dim); max-height: 120px; overflow-y: auto; }
-#console div { padding: 1px 0; }
-
-/* Modal for import/export */
-#modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; }
+/* === Modal === */
+#modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(1,4,9,0.8); z-index: 100; justify-content: center; align-items: center;
+  backdrop-filter: blur(4px);
+}
 #modal-overlay.show { display: flex; }
-#modal { background: var(--bg2); border: 2px solid var(--accent); border-radius: 8px; padding: 16px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; }
-#modal h2 { color: var(--accent); font-size: 16px; margin-bottom: 10px; }
-#modal textarea { width: 100%; height: 300px; background: var(--bg4); color: var(--text); border: 1px solid #444; font-family: inherit; font-size: 11px; padding: 8px; border-radius: 4px; }
-#modal .modal-buttons { display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; }
-#modal button { background: var(--bg3); color: var(--text); border: 1px solid var(--accent); padding: 6px 16px; cursor: pointer; font-family: inherit; font-size: 12px; border-radius: 3px; }
-#modal button:hover { background: var(--accent); }
-#modal .share-url { width: 100%; background: var(--bg4); color: var(--blue); border: 1px solid #444; padding: 8px; font-size: 11px; border-radius: 4px; word-break: break-all; }
+#modal {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+}
+#modal h2 { color: var(--accent); font-size: 16px; margin-bottom: 12px; }
+#modal textarea {
+  width: 100%; height: 300px; background: var(--bg4); color: var(--text);
+  border: 1px solid var(--border); font-family: monospace; font-size: 11px;
+  padding: 10px; border-radius: 6px; resize: vertical;
+}
+#modal .modal-buttons { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+#modal button {
+  background: var(--bg3); color: var(--text); border: 1px solid var(--border);
+  padding: 8px 18px; cursor: pointer; font-family: inherit; font-size: 12px;
+  border-radius: 6px; font-weight: 500;
+}
+#modal button:hover { border-color: var(--accent); background: #1c2331; }
+#modal button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+#modal .share-url {
+  width: 100%; background: var(--bg4); color: var(--blue);
+  border: 1px solid var(--border); padding: 10px; font-size: 11px;
+  border-radius: 6px; word-break: break-all;
+}
+
+/* === Scrollbar === */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg4); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
 
 /* === Mobile === */
 @media (max-width: 768px) {
   #topbar { padding: 4px 8px; gap: 4px; }
-  #topbar h1 { font-size: 14px; }
+  #topbar .brand { font-size: 14px; }
+  #topbar .brand .sub { display: none; }
   #topbar button, #topbar select { padding: 4px 8px; font-size: 10px; }
   #topbar .hint { display: none; }
   #main { flex-direction: column; }
-  #sidebar { width: 100%; max-height: 60px; display: flex; gap: 4px; overflow-x: auto; border-right: none; border-bottom: 2px solid var(--bg3); padding: 4px; }
+  #sidebar {
+    width: 100%; max-height: 80px; display: flex; gap: 4px;
+    overflow-x: auto; border-right: none; border-bottom: 1px solid var(--border); padding: 4px;
+  }
   #sidebar h3 { display: none; }
-  .palette-node { white-space: nowrap; margin: 0; padding: 5px 8px; }
+  .palette-node { white-space: nowrap; margin: 0; padding: 6px 10px; min-width: auto; }
+  .palette-node .sub { display: none; }
   #canvas-area { flex: 1; overflow: auto; }
-  #right-panel { width: 100%; max-height: 40vh; border-left: none; border-top: 2px solid var(--bg3); }
-  #bytecode-container { flex-direction: column; }
+  #right-panel { width: 100%; max-height: 40vh; border-left: none; border-top: 1px solid var(--border); }
   #reg-display { grid-template-columns: repeat(8, 1fr); }
   .reg-cell { font-size: 9px; padding: 2px 3px; }
 }
@@ -129,38 +331,104 @@ body { background: var(--bg); color: var(--text); font-family: 'Courier New', mo
 <body>
 
 <div id="topbar">
-  <h1>⚡ FLUX</h1>
-  <button onclick="compileGraph()">📋 Compile</button>
-  <button onclick="runBytecode()">▶ Run</button>
+  <div class="brand">⚡ FLUX <span class="sub">Visual Editor</span></div>
+  <div class="divider"></div>
+  <button class="primary" onclick="compileGraph()">📋 Compile</button>
+  <button class="success" onclick="runBytecode()">▶ Run</button>
   <span id="step-controls">
-    <button onclick="stepReset()" title="Reset to start">⏮ Step Reset</button>
+    <button onclick="stepReset()" title="Reset to start">⏮ Reset</button>
     <button onclick="stepForward()" title="Execute one instruction">⏭ Step</button>
   </span>
+  <div class="divider"></div>
+  <button onclick="downloadBin()">💾 Download .bin</button>
   <select id="example-select" onchange="loadExample(this.value); this.value=''">
     <option value="">— Examples —</option>
-    <option value="hello">Hello World</option>
-    <option value="counter">Counter Loop</option>
-    <option value="deadband">Deadband Controller</option>
-    <option value="factorial">Factorial</option>
+    <optgroup label="Conservation">
+      <option value="token_budget">Token Budget Enforcer</option>
+      <option value="rate_limiter">Rate Limiter</option>
+      <option value="room_entry">Room Entry Protocol</option>
+    </optgroup>
+    <optgroup label="Classic">
+      <option value="hello">Hello World</option>
+      <option value="counter">Counter Loop</option>
+      <option value="deadband">Deadband Controller</option>
+      <option value="factorial">Factorial</option>
+    </optgroup>
   </select>
-  <button onclick="showExport()">💾 Export</button>
-  <button onclick="showImport()">📂 Import</button>
+  <div class="divider"></div>
+  <button onclick="showExport()">📤 Export</button>
+  <button onclick="showImport()">📥 Import</button>
   <button onclick="shareProgram()">🔗 Share</button>
   <button onclick="clearCanvas()">🗑 Clear</button>
+  <span class="spacer"></span>
   <span class="hint">Drag nodes → canvas · Click ● then ● to wire</span>
 </div>
 
 <div id="main">
   <div id="sidebar">
-    <h3>Nodes</h3>
-    <div class="palette-node" draggable="true" data-type="constant">📦 Constant</div>
-    <div class="palette-node" draggable="true" data-type="arithmetic">🔧 Arithmetic</div>
-    <div class="palette-node" draggable="true" data-type="compare">🔍 Compare</div>
-    <div class="palette-node" draggable="true" data-type="branch">🔀 Branch</div>
-    <div class="palette-node" draggable="true" data-type="memory">💾 Memory</div>
-    <div class="palette-node" draggable="true" data-type="stack">📚 Stack</div>
-    <div class="palette-node" draggable="true" data-type="output">📤 Output</div>
-    <div class="palette-node" draggable="true" data-type="halt">⏹ Halt</div>
+    <h3>Conservation</h3>
+    <div class="palette-node" draggable="true" data-type="budget">
+      <span class="icon">🛡</span>
+      <div><div class="label">Budget</div><div class="sub">Bounded quantity</div></div>
+    </div>
+    <div class="palette-node" draggable="true" data-type="gate">
+      <span class="icon">🚦</span>
+      <div><div class="label">Action Gate</div><div class="sub">Permit / block</div></div>
+    </div>
+    <div class="palette-node" draggable="true" data-type="decision">
+      <span class="icon">🔀</span>
+      <div><div class="label">Decision</div><div class="sub">If/else branch</div></div>
+    </div>
+
+    <h3>Agents & Rooms</h3>
+    <div class="palette-node" draggable="true" data-type="llm">
+      <span class="icon">🤖</span>
+      <div><div class="label">LLM Call</div><div class="sub">Model invoke</div></div>
+    </div>
+    <div class="palette-node" draggable="true" data-type="room">
+      <span class="icon">💬</span>
+      <div><div class="label">Room Protocol</div><div class="sub">PLATO msg</div></div>
+    </div>
+
+    <h3>Flow</h3>
+    <div class="palette-node" draggable="true" data-type="io">
+      <span class="icon">埠</span>
+      <div><div class="label">I/O Port</div><div class="sub">Entry / exit</div></div>
+    </div>
+    <div class="palette-node" draggable="true" data-type="constant">
+      <span class="icon">📦</span>
+      <div><div class="label">Constant</div><div class="sub">Static value</div></div>
+    </div>
+    <div class="palette-node" draggable="true" data-type="comparator">
+      <span class="icon">🔍</span>
+      <div><div class="label">Comparator</div><div class="sub">==, &lt;, &gt;</div></div>
+    </div>
+
+    <h3>Low-Level</h3>
+    <div class="palette-node" draggable="true" data-type="arithmetic">
+      <span class="icon">🔧</span>
+      <div><div class="label">Arithmetic</div><div class="sub">+ − × ÷</div></div>
+    </div>
+    <div class="palette-node" draggable="true" data-type="branch">
+      <span class="icon">↪</span>
+      <div><div class="label">Branch</div><div class="sub">Jump</div></div>
+    </div>
+    <div class="palette-node" draggable="true" data-type="memory">
+      <span class="icon">💾</span>
+      <div><div class="label">Memory</div><div class="sub">Load / store</div></div>
+    </div>
+    <div class="palette-node" draggable="true" data-type="stack">
+      <span class="icon">📚</span>
+      <div><div class="label">Stack</div><div class="sub">Push / pop</div></div>
+    </div>
+    <div class="palette-node" draggable="true" data-type="output">
+      <span class="icon">📊</span>
+      <div><div class="label">Output</div><div class="sub">Display reg</div></div>
+    </div>
+    <div class="palette-node" draggable="true" data-type="halt">
+      <span class="icon">⏹</span>
+      <div><div class="label">Halt</div><div class="sub">Stop exec</div></div>
+    </div>
   </div>
 
   <div id="canvas-area">
@@ -171,26 +439,27 @@ body { background: var(--bg); color: var(--text); font-family: 'Courier New', mo
 
   <div id="right-panel">
     <div class="panel-section">
-      <h3>Bytecode <span class="badge" id="bytecount-badge"></span></h3>
-      <div id="bytecode-container">
-        <div class="col">
-          <h4>Assembly</h4>
-          <textarea id="asm-output" readonly placeholder="// Compile to see assembly"></textarea>
-        </div>
-        <div class="col">
-          <h4>Hex</h4>
-          <div id="hex-output">—</div>
-        </div>
-      </div>
+      <h3>Assembly <span class="badge" id="bytecount-badge"></span></h3>
+      <textarea id="asm-output" readonly placeholder="// Compile to see FLUX assembly"></textarea>
+      <h3 style="margin-top:8px;">Bytecode Hex</h3>
+      <div id="hex-output">—</div>
     </div>
+
+    <div class="panel-section">
+      <h3>Conservation Ledger <span class="badge" id="ledger-badge"></span></h3>
+      <div id="ledger-output"><div class="ledger-empty">No budgets defined — add a Budget node to begin</div></div>
+    </div>
+
     <div class="panel-section">
       <h3>Execution <span class="badge" id="exec-badge"></span></h3>
       <div id="vm-output">—</div>
     </div>
+
     <div class="panel-section">
       <h3>Registers <span class="badge">R0–R15</span></h3>
       <div id="reg-display"></div>
     </div>
+
     <div class="panel-section" style="flex:1; min-height:0;">
       <h3>Console</h3>
       <div id="console"></div>
@@ -210,7 +479,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Courier New', mo
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════
-//  EMBEDDED FLUX VM
+//  EMBEDDED FLUX VM  (from flux-js, trimmed)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const OP = {
@@ -227,7 +496,6 @@ const OP = {
 };
 const MNEMONIC = Object.fromEntries(Object.entries(OP).map(([k,v])=>[v,k]));
 
-// Instruction sizes for stepping
 const INST_SIZES = {
   [OP.HALT]:1,[OP.NOP]:1,[OP.DUP]:1,[OP.YIELD]:1,
   [OP.INC]:2,[OP.DEC]:2,[OP.PUSH]:2,[OP.POP]:2,
@@ -257,7 +525,6 @@ class FluxVM {
 
   step() {
     if (this.halted || this.pc >= this.bc.length) return false;
-    const startPC = this.pc;
     this.prevRegs.set(this.gp);
     this.changedRegs.clear();
     const op = this._u8();
@@ -377,7 +644,7 @@ let selectedNode = null;
 let dragNode = null;
 let dragOffset = {x:0,y:0};
 let wireStart = null;
-let stepVM = null;    // VM instance for stepping
+let stepVM = null;
 let lastCompiledBC = null;
 let lastCompiledASM = '';
 
@@ -385,19 +652,139 @@ const canvas = document.getElementById('canvas');
 const svg = document.getElementById('wire-svg');
 const canvasArea = document.getElementById('canvas-area');
 
+// Memory address allocation for budget tracking
+const BUDGET_BASE_ADDR = 100; // Budgets stored at mem[100+]
+
 // ═══════════════════════════════════════════════════════════════════════════
 //  NODE DEFINITIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
 const NODE_DEFS = {
+  // ── Conservation Nodes ──
+  budget: {
+    title: '🛡 Conservation Budget',
+    inputs: [], outputs: ['budget'],
+    props: [
+      {key:'name', label:'Name', default:'token_budget', type:'text'},
+      {key:'type', label:'Type', default:'tokens', type:'select', options:['tokens','actions','time','calls']},
+      {key:'limit', label:'Limit', default:1000, type:'number'},
+      {key:'reg', label:'Reg', default:0, type:'number'},
+      {key:'addr', label:'Addr', default:100, type:'number'}
+    ],
+    compile: (n) => {
+      const reg = n.props.reg||0;
+      const addr = n.props.addr||100;
+      const limit = n.props.limit||1000;
+      return `MOVI R${reg}, ${limit}  ; budget[${n.props.name||'unnamed'}] = ${limit} ${n.props.type||'tokens'}\nMOVI R14, ${addr}\nSTORE R${reg}, R14`;
+    },
+    ledger: (n) => ({name: n.props.name||'unnamed', type: n.props.type||'tokens', limit: n.props.limit||0, addr: n.props.addr||100})
+  },
+
+  gate: {
+    title: '🚦 Action Gate',
+    inputs: ['check'], outputs: ['permit', 'deny'],
+    props: [
+      {key:'budgetAddr', label:'B-Addr', default:100, type:'number'},
+      {key:'cost', label:'Cost', default:1, type:'number'},
+      {key:'reg', label:'Reg', default:0, type:'number'}
+    ],
+    compile: (n) => {
+      const reg = n.props.reg||0;
+      const addr = n.props.budgetAddr||100;
+      const cost = n.props.cost||1;
+      return `MOVI R14, ${addr}  ; load remaining budget\nLOAD R${reg}, R14\nMOVI R15, ${cost}  ; cost per action\nCMP R${reg}, R15  ; budget >= cost?\nJE R0, _gate_permit_${n.reg || n.id}\n; deny path\nMOVI R0, 0  ; BLOCKED\nHALT\n_gate_permit_${n.reg || n.id}:\nISUB R${reg}, R${reg}, R15  ; deduct\nSTORE R${reg}, R14  ; save remaining\nMOVI R0, 1  ; PERMITTED`;
+    }
+  },
+
+  decision: {
+    title: '🔀 Decision Point',
+    inputs: ['cond'], outputs: ['true', 'false'],
+    props: [
+      {key:'rA', label:'Reg A', default:0, type:'number'},
+      {key:'rB', label:'Reg B', default:1, type:'number'},
+      {key:'op', label:'Op', default:'==', type:'select', options:['==','!=','<','>','<=','>=']}
+    ],
+    compile: (n) => {
+      const rA = n.props.rA||0;
+      const rB = n.props.rB||1;
+      const label = `L_${n.id}`;
+      // CMP sets zero flag when equal
+      return `CMP R${rA}, R${rB}  ; decision: R${rA} ${n.props.op||'=='} R${rB}`;
+    }
+  },
+
+  // ── Agent / Room Nodes ──
+  llm: {
+    title: '🤖 LLM Call',
+    inputs: ['prompt', 'budget'], outputs: ['response'],
+    props: [
+      {key:'model', label:'Model', default:'glm-5.2', type:'text'},
+      {key:'maxTok', label:'MaxTok', default:512, type:'number'},
+      {key:'temp', label:'Temp', default:7, type:'number'},
+      {key:'reg', label:'Reg', default:0, type:'number'}
+    ],
+    compile: (n) => {
+      const reg = n.props.reg||0;
+      const maxTok = n.props.maxTok||512;
+      return `; LLM[${n.props.model||'default'}] max=${maxTok} temp=${n.props.temp||7}\nMOVI R${reg}, ${maxTok}  ; bounded max_tokens\nPUSH R${reg}  ; push token budget\n; CALL model subroutine would go here\n; response placeholder:\nMOVI R${reg}, 1  ; success`;
+    }
+  },
+
+  room: {
+    title: '💬 Room Protocol',
+    inputs: ['message'], outputs: ['sent'],
+    props: [
+      {key:'action', label:'Action', default:'send', type:'select', options:['send','recv','enter','exit']},
+      {key:'room', label:'Room', default:'plato-main', type:'text'},
+      {key:'reg', label:'Reg', default:0, type:'number'}
+    ],
+    compile: (n) => {
+      const reg = n.props.reg||0;
+      const action = n.props.action||'send';
+      const room = n.props.room||'plato-main';
+      return `; ROOM ${action} → ${room}\nMOVI R${reg}, ${action.charCodeAt(0)}  ; action code\nPUSH R${reg}  ; queue message\nMOVI R${reg}, 1  ; success`;
+    }
+  },
+
+  // ── Flow Nodes ──
+  io: {
+    title: '埠 I/O Port',
+    inputs: [], outputs: ['signal'],
+    props: [
+      {key:'mode', label:'Mode', default:'input', type:'select', options:['input','output']},
+      {key:'reg', label:'Reg', default:0, type:'number'},
+      {key:'value', label:'Value', default:0, type:'number'}
+    ],
+    compile: (n) => {
+      if (n.props.mode === 'input') {
+        return `MOVI R${n.props.reg||0}, ${n.props.value||0}  ; INPUT port`;
+      }
+      return `; OUTPUT port: R${n.props.reg||0} = ${n.props.value||0}\nMOVI R${n.props.reg||0}, ${n.props.value||0}`;
+    }
+  },
+
+  // ── Basic Nodes ──
   constant: {
-    title: 'Constant', inputs: [], outputs: ['val'],
+    title: '📦 Constant',
+    inputs: [], outputs: ['val'],
     props: [{key:'value', label:'Value', default:42, type:'number'},
             {key:'reg', label:'Reg', default:0, type:'number'}],
     compile: (n) => `MOVI R${n.props.reg||0}, ${n.props.value||0}`
   },
+
+  comparator: {
+    title: '🔍 Comparator',
+    inputs: ['A', 'B'], outputs: ['flags'],
+    props: [{key:'rA', label:'Reg A', default:0, type:'number'},
+            {key:'rB', label:'Reg B', default:1, type:'number'},
+            {key:'op', label:'Op', default:'==', type:'select', options:['==','!=','<','>','<=','>=']}],
+    compile: (n) => `CMP R${n.props.rA||0}, R${n.props.rB||1}  ; compare R${n.props.rA||0} ${n.props.op||'=='} R${n.props.rB||1}`
+  },
+
+  // ── Legacy Nodes ──
   arithmetic: {
-    title: 'Arithmetic', inputs: ['A','B'], outputs: ['result'],
+    title: '🔧 Arithmetic',
+    inputs: ['A','B'], outputs: ['result'],
     props: [{key:'op', label:'Op', default:'ADD', type:'select', options:['ADD','SUB','MUL','DIV','MOD']},
             {key:'reg', label:'Dest', default:0, type:'number'},
             {key:'rA', label:'RA', default:1, type:'number'},
@@ -407,21 +794,17 @@ const NODE_DEFS = {
       return `${m[n.props.op]||'IADD'} R${n.props.reg||0}, R${n.props.rA||1}, R${n.props.rB||2}`;
     }
   },
-  compare: {
-    title: 'Compare', inputs: ['A','B'], outputs: ['flags'],
-    props: [{key:'rA', label:'RA', default:0, type:'number'},
-            {key:'rB', label:'RB', default:1, type:'number'}],
-    compile: (n) => `CMP R${n.props.rA||0}, R${n.props.rB||1}`
-  },
   branch: {
-    title: 'Branch', inputs: ['cond'], outputs: ['→ true','→ false'],
+    title: '↪ Branch',
+    inputs: ['cond'], outputs: ['→ target'],
     props: [{key:'type', label:'Type', default:'JE', type:'select', options:['JE','JNE','JZ','JNZ','JMP']},
             {key:'reg', label:'Reg', default:0, type:'number'},
             {key:'label', label:'Label', default:'target', type:'text'}],
     compile: (n) => `${n.props.type||'JE'} R${n.props.reg||0}, ${n.props.label||'target'}`
   },
   memory: {
-    title: 'Memory', inputs: ['addr/val'], outputs: ['loaded'],
+    title: '💾 Memory',
+    inputs: ['addr/val'], outputs: ['loaded'],
     props: [{key:'op', label:'Op', default:'STORE', type:'select', options:['STORE','LOAD']},
             {key:'reg', label:'Reg', default:0, type:'number'},
             {key:'addrReg', label:'AddrR', default:1, type:'number'}],
@@ -430,7 +813,8 @@ const NODE_DEFS = {
       : `LOAD R${n.props.reg||0}, R${n.props.addrReg||1}`
   },
   stack: {
-    title: 'Stack', inputs: ['val'], outputs: ['popped'],
+    title: '📚 Stack',
+    inputs: ['val'], outputs: ['popped'],
     props: [{key:'op', label:'Op', default:'PUSH', type:'select', options:['PUSH','POP','DUP']},
             {key:'reg', label:'Reg', default:0, type:'number'}],
     compile: (n) => {
@@ -440,12 +824,14 @@ const NODE_DEFS = {
     }
   },
   output: {
-    title: 'Output', inputs: ['value'], outputs: [],
+    title: '📊 Output',
+    inputs: ['value'], outputs: [],
     props: [{key:'reg', label:'Reg', default:0, type:'number'}],
-    compile: (n) => `// OUT: R${n.props.reg||0} (value displayed in output panel)`
+    compile: (n) => `; OUT: R${n.props.reg||0} = (display in output panel)`
   },
   halt: {
-    title: 'Halt', inputs: [], outputs: [],
+    title: '⏹ Halt',
+    inputs: [], outputs: [],
     props: [],
     compile: () => 'HALT'
   }
@@ -464,6 +850,7 @@ function createNode(type, x, y, props) {
   }
   nodes.push(node);
   renderNode(node);
+  updateLedger();
   return node;
 }
 
@@ -483,7 +870,7 @@ function renderNode(node) {
 
   html += '<div class="node-body">';
   for (const p of def.props) {
-    html += `<div><label>${p.label}</label>`;
+    html += `<div class="row"><label>${p.label}</label>`;
     if (p.type === 'select') {
       html += `<select onchange="updateProp(${node.id},'${p.key}',this.value)">`;
       for (const opt of p.options) {
@@ -491,15 +878,20 @@ function renderNode(node) {
       }
       html += `</select>`;
     } else {
-      html += `<input type="${p.type==='number'?'number':'text'}" value="${node.props[p.key]}" onchange="updateProp(${node.id},'${p.key}',this.value)">`;
+      html += `<input type="${p.type==='number'?'number':'text'}" value="${node.props[p.key]}" onchange="updateProp(${node.id},'${p.key}',this.value)" style="width:auto;max-width:90px;">`;
     }
     html += `</div>`;
   }
   html += '</div>';
   el.innerHTML = html;
 
+  // Calculate port positions based on body height
+  const inputCount = def.inputs.length;
+  const outputCount = def.outputs.length;
+  const maxPorts = Math.max(inputCount, outputCount);
+
   def.inputs.forEach((name, i) => {
-    const portTop = 30 + i * 22 + 10;
+    const portTop = 34 + i * 22 + 12;
     const port = document.createElement('div');
     port.className = 'port input';
     port.style.top = portTop + 'px';
@@ -510,12 +902,13 @@ function renderNode(node) {
     el.appendChild(port);
     const lbl = document.createElement('span');
     lbl.className = 'port-title input';
-    lbl.style.top = portTop + 'px';
+    lbl.style.top = (portTop - 1) + 'px';
     lbl.textContent = name;
     el.appendChild(lbl);
   });
+
   def.outputs.forEach((name, i) => {
-    const portTop = 30 + i * 22 + 10;
+    const portTop = 34 + i * 22 + 12;
     const port = document.createElement('div');
     port.className = 'port output';
     port.style.top = portTop + 'px';
@@ -526,7 +919,7 @@ function renderNode(node) {
     el.appendChild(port);
     const lbl = document.createElement('span');
     lbl.className = 'port-title output';
-    lbl.style.top = portTop + 'px';
+    lbl.style.top = (portTop - 1) + 'px';
     lbl.textContent = name;
     el.appendChild(lbl);
   });
@@ -539,12 +932,14 @@ function updateProp(id, key, val) {
   if (!node) return;
   const def = NODE_DEFS[node.type].props.find(p => p.key === key);
   node.props[key] = def && def.type === 'number' ? parseInt(val) || 0 : val;
+  updateLedger();
 }
 
 function deleteNode(id) {
   nodes = nodes.filter(n => n.id !== id);
   wires = wires.filter(w => w.from.nodeId !== id && w.to.nodeId !== id);
   rerenderAll();
+  updateLedger();
 }
 
 function startDrag(e, id) {
@@ -560,7 +955,6 @@ function startDrag(e, id) {
   el.classList.add('selected');
 }
 
-// Touch support for mobile dragging
 function getEventPos(e) {
   if (e.touches && e.touches[0]) return {x: e.touches[0].clientX, y: e.touches[0].clientY};
   return {x: e.clientX, y: e.clientY};
@@ -648,7 +1042,11 @@ function drawWires() {
     if (!from || !to) continue;
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', bezierPath(from.x, from.y, to.x, to.y));
-    path.setAttribute('stroke', '#3a5');
+    // Color based on source node type
+    const fromNode = nodes.find(n => n.id === w.from.nodeId);
+    const colors = {budget:'#f0883e',gate:'#f85149',decision:'#d29922',llm:'#39d2c0',room:'#f778ba',io:'#58a6ff',constant:'#3fb950',comparator:'#bc8cff',arithmetic:'#f0883e',branch:'#d29922',memory:'#58a6ff',stack:'#3fb950',output:'#8b949e',halt:'#484f58'};
+    const color = fromNode ? (colors[fromNode.type]||'#3fb950') : '#3fb950';
+    path.setAttribute('stroke', color);
     path.setAttribute('data-wire-idx', i);
     path.onmousedown = (e) => { e.stopPropagation(); if(confirm('Delete wire?')) { wires.splice(i,1); drawWires(); } };
     svg.appendChild(path);
@@ -686,6 +1084,7 @@ function clearCanvas() {
   document.getElementById('reg-display').innerHTML = '';
   document.getElementById('bytecount-badge').textContent = '';
   document.getElementById('exec-badge').textContent = '';
+  updateLedger();
   log('Canvas cleared');
 }
 
@@ -693,6 +1092,37 @@ function rerenderAll() {
   canvas.querySelectorAll('.node').forEach(el => el.remove());
   for (const node of nodes) renderNode(node);
   drawWires();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  CONSERVATION LEDGER
+// ═══════════════════════════════════════════════════════════════════════════
+
+function updateLedger() {
+  const ledgerEl = document.getElementById('ledger-output');
+  const badgeEl = document.getElementById('ledger-badge');
+  const budgetNodes = nodes.filter(n => n.type === 'budget');
+
+  if (budgetNodes.length === 0) {
+    ledgerEl.innerHTML = '<div class="ledger-empty">No budgets defined — add a Budget node to begin</div>';
+    badgeEl.textContent = '';
+    return;
+  }
+
+  badgeEl.textContent = `${budgetNodes.length} active`;
+  let html = '';
+  for (const n of budgetNodes) {
+    const def = NODE_DEFS.budget;
+    const info = def.ledger(n);
+    html += `<div class="ledger-entry">
+      <div>
+        <span class="lname">${info.name}</span>
+        <span class="ltype">${info.type}</span>
+      </div>
+      <span class="lval">${info.limit.toLocaleString()}</span>
+    </div>`;
+  }
+  ledgerEl.innerHTML = html;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -720,18 +1150,33 @@ function compileGraph() {
   const sorted = topologicalSort();
   const labelPositions = {};
 
-  // Pre-scan: find branch targets
+  // Pre-scan: find branch/decision targets
   for (const node of sorted) {
     const incomingWire = wires.find(w => w.to.nodeId === node.id && w.to.port === 0);
-    if (incomingWire && nodes.find(n => n.id === incomingWire.from.nodeId)?.type === 'branch') {
+    if (incomingWire) {
       const fromNode = nodes.find(n => n.id === incomingWire.from.nodeId);
-      const labelName = `L_${node.id}`;
-      labelPositions[labelName] = true;
-      if (fromNode) fromNode._resolvedLabel = labelName;
+      if (fromNode && (fromNode.type === 'branch' || fromNode.type === 'decision')) {
+        const labelName = `L_${node.id}`;
+        labelPositions[labelName] = true;
+        if (fromNode) fromNode._resolvedLabel = labelName;
+      }
     }
   }
 
   const emit = [];
+  // Emit header comment
+  emit.push('// ═══ FLUX Visual Editor — Compiled Output ═══');
+  emit.push(`// Nodes: ${sorted.length} | Wires: ${wires.length}`);
+  const budgetNodes = nodes.filter(n => n.type === 'budget');
+  if (budgetNodes.length > 0) {
+    emit.push(`// Conservation budgets: ${budgetNodes.length}`);
+    for (const bn of budgetNodes) {
+      const info = NODE_DEFS.budget.ledger(bn);
+      emit.push(`//   ${info.name} (${info.type}): limit=${info.limit} addr=${info.addr}`);
+    }
+  }
+  emit.push('// ═══════════════════════════════════════════');
+
   for (const node of sorted) {
     const def = NODE_DEFS[node.type];
     if (!def) continue;
@@ -744,6 +1189,10 @@ function compileGraph() {
       const reg = node.props.reg || 0;
       compiled = `${mn} R${reg}, ${node._resolvedLabel}`;
     }
+    if (node.type === 'decision' && node._resolvedLabel) {
+      const mn = node.props.op === '!=' ? 'JNE' : 'JE';
+      compiled = `CMP R${node.props.rA||0}, R${node.props.rB||1}\n${mn} R0, ${node._resolvedLabel}`;
+    }
     emit.push(compiled);
   }
 
@@ -754,7 +1203,6 @@ function compileGraph() {
   try {
     const bc = assemble(asmText);
     lastCompiledBC = bc;
-    // Format hex with address prefixes
     const hexLines = [];
     for (let i = 0; i < bc.length; i += 16) {
       const chunk = Array.from(bc.slice(i, i + 16));
@@ -774,7 +1222,42 @@ function compileGraph() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  RUN
+//  DOWNLOAD .BIN
+// ═══════════════════════════════════════════════════════════════════════════
+
+function downloadBin() {
+  let bc = lastCompiledBC;
+  if (!bc) {
+    bc = compileGraph();
+    if (!bc) return;
+  }
+
+  // FLX0 binary format: magic(4) + version(2) + bytecodeLen(4) + bytecode + checksum(2)
+  const magic = [0x46, 0x4C, 0x58, 0x30]; // "FLX0"
+  const version = [0x01, 0x00];
+  const lenBytes = [
+    (bc.length) & 0xFF,
+    (bc.length >> 8) & 0xFF,
+    (bc.length >> 16) & 0xFF,
+    (bc.length >> 24) & 0xFF
+  ];
+  let checksum = 0;
+  for (const b of bc) checksum = (checksum + b) & 0xFFFF;
+  const checkBytes = [checksum & 0xFF, (checksum >> 8) & 0xFF];
+
+  const binData = new Uint8Array([...magic, ...version, ...lenBytes, ...bc, ...checkBytes]);
+  const blob = new Blob([binData], {type: 'application/octet-stream'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'flux-program.bin';
+  a.click();
+  URL.revokeObjectURL(url);
+  log(`Downloaded flux-program.bin (${binData.length} bytes, ${bc.length} bytecode)`);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  RUN / STEP
 // ═══════════════════════════════════════════════════════════════════════════
 
 function runBytecode() {
@@ -787,10 +1270,6 @@ function runBytecode() {
   displayVMResult(vm);
   log(`Executed: ${vm.cycles} cycles, halted=${vm.halted}`);
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  STEP-THROUGH EXECUTION
-// ═══════════════════════════════════════════════════════════════════════════
 
 function stepReset() {
   if (!lastCompiledBC) {
@@ -806,24 +1285,16 @@ function stepReset() {
 
 function stepForward() {
   if (!stepVM || stepVM.halted || stepVM.error) {
-    // Try to compile first
-    if (!lastCompiledBC) {
-      let bc = compileGraph();
-      if (!bc) return;
-    }
+    if (!lastCompiledBC) { let bc = compileGraph(); if (!bc) return; }
     if (!stepVM) stepReset();
     if (!stepVM) return;
   }
   if (stepVM.halted) { log('Already halted'); return; }
   if (stepVM.error) { log('Error state — reset to continue'); return; }
-
   const pcBefore = stepVM.pc;
   const hasMore = stepVM.step();
   const pcAfter = stepVM.pc;
-
-  // Try to figure out which node this PC corresponds to
   highlightNodeByPC(pcBefore, pcAfter);
-
   displayVMResult(stepVM);
   if (stepVM.halted) {
     document.getElementById('exec-badge').textContent = 'halted';
@@ -836,67 +1307,45 @@ function stepForward() {
   }
 }
 
-// Map PC offsets to nodes using the assembly output
-let pcToNodeMap = []; // array of {startPC, endPC, nodeId, label}
+let pcToNodeMap = [];
 
 function buildPCNodeMap() {
   pcToNodeMap = [];
   if (!lastCompiledBC || !lastCompiledASM) return;
-  // Walk the asm to compute PC positions per line, then map to nodes
   const lines = lastCompiledASM.split('\n');
   let pc = 0;
   const pcLines = [];
   for (const line of lines) {
     const trimmed = line.trim();
-    if (!trimmed || trimmed.endsWith(':')) {
-      pcLines.push({line: trimmed, pc, isLabel: true});
+    if (!trimmed || trimmed.startsWith('//') || trimmed.endsWith(':')) {
+      if (trimmed.endsWith(':')) pcLines.push({line: trimmed, pc, isLabel: true});
       continue;
     }
     const parts = trimmed.replace(/,/g,' ').split(/\s+/);
     const mn = parts[0].toUpperCase();
     let size = 0;
-    if (mn in OP) {
-      size = INST_SIZES[OP[mn]] || 1;
-    }
+    if (mn in OP) size = INST_SIZES[OP[mn]] || 1;
     pcLines.push({line: trimmed, pc, size, isLabel: false});
     pc += size;
   }
-  // Now map nodes
-  for (const node of topologicalSort()) {
-    // Find this node's compiled line by matching content
-    const def = NODE_DEFS[node.type];
-    if (!def) continue;
-    const compiled = def.compile(node);
-    for (const pl of pcLines) {
-      if (pl.isLabel) continue;
-      // Check if this line matches this node
-      // Simple heuristic: check for the label L_<nodeId> preceding
-    }
-  }
-  // Store the pcLines for highlighting
   pcToNodeMap = pcLines;
 }
 
 function highlightNodeByPC(pcBefore, pcAfter) {
   clearActiveNodes();
-  // Find the asm line at pcBefore
   if (pcToNodeMap.length === 0) buildPCNodeMap();
-  // Find the current instruction
   for (let i = 0; i < pcToNodeMap.length; i++) {
     const pl = pcToNodeMap[i];
     if (!pl.isLabel && pl.pc === pcBefore) {
-      // Highlight: try to find nearest preceding label
       let labelName = null;
       for (let j = i - 1; j >= 0; j--) {
         if (pcToNodeMap[j].isLabel) { labelName = pcToNodeMap[j].line.replace(':', ''); break; }
       }
-      // If there's a label, find and highlight that node
       if (labelName && labelName.startsWith('L_')) {
         const nodeId = parseInt(labelName.substring(2));
         const el = canvas.querySelector(`.node[data-id="${nodeId}"]`);
         if (el) el.classList.add('active');
       }
-      // Also try to match by instruction content to a node
       const activeNodeId = findNodeForAsmLine(pl.line, pcBefore);
       if (activeNodeId) {
         const el2 = canvas.querySelector(`.node[data-id="${activeNodeId}"]`);
@@ -905,11 +1354,9 @@ function highlightNodeByPC(pcBefore, pcAfter) {
       break;
     }
   }
-  // Also check if we jumped (branch taken) — highlight the target
   if (pcAfter !== pcBefore) {
     const branchOp = lastCompiledBC[pcBefore];
     if ([OP.JMP, OP.JZ, OP.JNZ, OP.CALL, OP.JE, OP.JNE].includes(branchOp)) {
-      // The branch was taken (or fell through) — try highlighting destination
       for (let i = 0; i < pcToNodeMap.length; i++) {
         const pl = pcToNodeMap[i];
         if (!pl.isLabel && pl.pc === pcAfter) {
@@ -930,12 +1377,10 @@ function highlightNodeByPC(pcBefore, pcAfter) {
 }
 
 function findNodeForAsmLine(line, pc) {
-  // Walk nodes and find whose compiled output matches
   for (const node of nodes) {
     const def = NODE_DEFS[node.type];
     if (!def || !def.compile) continue;
-    const compiled = def.compile(node).trim();
-    // Normalize comparison
+    const compiled = def.compile(node).trim().split('\n')[0];
     const norm = (s) => s.replace(/\s+/g, ' ').replace(/,/g, ' ').trim().toUpperCase();
     if (norm(compiled) === norm(line)) return node.id;
   }
@@ -955,20 +1400,22 @@ function displayVMResult(vm) {
   if (vm.error) {
     outHtml = `<span style="color:var(--red);">⛔ ERROR: ${vm.error}</span>\n`;
   } else if (vm.halted) {
-    outHtml = `<span style="color:#4f4;">✓ HALTED</span>\n`;
+    outHtml = `<span style="color:var(--green);">✓ HALTED</span>\n`;
   } else {
     outHtml = `<span style="color:var(--blue);">⏸ Paused (PC=${vm.pc})</span>\n`;
   }
   outHtml += `Cycles: ${vm.cycles} | PC: ${vm.pc} | Stack: [${vm.stack.join(', ')}]\n`;
   for (const node of nodes) {
     if (node.type === 'output') {
-      outHtml += `📤 OUT R${node.props.reg||0} = ${vm.reg(node.props.reg||0)}\n`;
+      outHtml += `📊 OUT R${node.props.reg||0} = ${vm.reg(node.props.reg||0)}\n`;
+    }
+    if (node.type === 'io' && node.props.mode === 'output') {
+      outHtml += `埠 OUT R${node.props.reg||0} = ${vm.reg(node.props.reg||0)}\n`;
     }
   }
   document.getElementById('vm-output').innerHTML = outHtml.replace(/\n/g,'<br>');
   document.getElementById('exec-badge').textContent = vm.halted ? 'halted' : (vm.error ? 'error' : `${vm.cycles} cycles`);
 
-  // Registers with change highlighting
   const regEl = document.getElementById('reg-display');
   regEl.innerHTML = '';
   for (let i = 0; i < 16; i++) {
@@ -981,12 +1428,12 @@ function displayVMResult(vm) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  IMPORT / EXPORT
+//  IMPORT / EXPORT / SHARE
 // ═══════════════════════════════════════════════════════════════════════════
 
 function serializeProgram() {
   return JSON.stringify({
-    version: 2,
+    version: 3,
     nodes: nodes.map(n => ({id:n.id, type:n.type, x:n.x, y:n.y, props:n.props})),
     wires: wires.map(w => ({from:w.from, to:w.to})),
     nextId
@@ -1012,6 +1459,7 @@ function deserializeProgram(jsonStr) {
     }
     wires = data.wires.map(w => ({from: w.from, to: w.to}));
     drawWires();
+    updateLedger();
     log(`Imported: ${data.nodes.length} nodes, ${data.wires.length} wires`);
     return true;
   } catch(e) {
@@ -1023,12 +1471,12 @@ function deserializeProgram(jsonStr) {
 function showExport() {
   const json = serializeProgram();
   const body = document.getElementById('modal-body');
-  document.getElementById('modal-title').textContent = '💾 Export Program';
+  document.getElementById('modal-title').textContent = '📤 Export Program';
   body.innerHTML = `<p style="font-size:11px;color:var(--dim);margin-bottom:8px;">Copy this JSON to save your program:</p>
     <textarea id="export-text" readonly>${json}</textarea>
     <div class="modal-buttons">
       <button onclick="navigator.clipboard.writeText(document.getElementById('export-text').value); log('Copied to clipboard');">📋 Copy</button>
-      <button onclick="downloadProgram()">💾 Download</button>
+      <button class="primary" onclick="downloadProgram()">💾 Download JSON</button>
     </div>`;
   document.getElementById('modal-overlay').classList.add('show');
 }
@@ -1046,9 +1494,9 @@ function downloadProgram() {
 
 function showImport() {
   const body = document.getElementById('modal-body');
-  document.getElementById('modal-title').textContent = '📂 Import Program';
+  document.getElementById('modal-title').textContent = '📥 Import Program';
   body.innerHTML = `<p style="font-size:11px;color:var(--dim);margin-bottom:8px;">Paste JSON or choose a file:</p>
-    <textarea id="import-text" placeholder='{"version":2,"nodes":[...],"wires":[...]}'></textarea>
+    <textarea id="import-text" placeholder='{"version":3,"nodes":[...],"wires":[...]}'></textarea>
     <input type="file" id="import-file" accept=".json" style="margin-top:8px;font-size:11px;color:var(--dim);" onchange="
       const f=this.files[0]; if(!f)return;
       const r=new FileReader();
@@ -1056,7 +1504,7 @@ function showImport() {
       r.readAsText(f);
     ">
     <div class="modal-buttons">
-      <button onclick="doImport()">📋 Load Program</button>
+      <button class="primary" onclick="doImport()">📋 Load Program</button>
     </div>`;
   document.getElementById('modal-overlay').classList.add('show');
 }
@@ -1067,32 +1515,20 @@ function doImport() {
   if (deserializeProgram(text)) closeModal();
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  SHARE (URL hash encoding)
-// ═══════════════════════════════════════════════════════════════════════════
-
 function shareProgram() {
   const json = serializeProgram();
-  // Compress with LZ-style: use encodeURIComponent + btoa
   let encoded;
-  try {
-    encoded = btoa(unescape(encodeURIComponent(json)));
-  } catch(e) {
-    encoded = btoa(json);
-  }
+  try { encoded = btoa(unescape(encodeURIComponent(json))); } catch(e) { encoded = btoa(json); }
   const url = location.origin + location.pathname + '#p=' + encoded;
   const body = document.getElementById('modal-body');
   document.getElementById('modal-title').textContent = '🔗 Share Program';
   body.innerHTML = `<p style="font-size:11px;color:var(--dim);margin-bottom:8px;">Share this URL — the program is encoded in the hash. No server needed!</p>
     <div class="share-url" id="share-url">${url}</div>
     <div class="modal-buttons">
-      <button onclick="navigator.clipboard.writeText('${url.replace(/'/g,"\\'")}'); log('URL copied to clipboard');">📋 Copy URL</button>
+      <button class="primary" onclick="navigator.clipboard.writeText(document.getElementById('share-url').textContent); log('URL copied');">📋 Copy URL</button>
     </div>`;
   document.getElementById('modal-overlay').classList.add('show');
-  // Also copy to clipboard directly
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(url).then(() => log('Share URL copied to clipboard'));
-  }
+  if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => log('Share URL copied'));
 }
 
 function loadFromHash() {
@@ -1103,27 +1539,15 @@ function loadFromHash() {
       const json = decodeURIComponent(escape(atob(encoded)));
       deserializeProgram(json);
       log('Loaded program from URL');
-    } catch(e) {
-      log('Failed to load shared program: ' + e.message);
-    }
+    } catch(e) { log('Failed to load shared program: ' + e.message); }
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  MODAL
-// ═══════════════════════════════════════════════════════════════════════════
-
-function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('show');
-}
-
+function closeModal() { document.getElementById('modal-overlay').classList.remove('show'); }
 document.getElementById('modal-overlay').addEventListener('click', (e) => {
   if (e.target === document.getElementById('modal-overlay')) closeModal();
 });
-
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeModal();
-});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  EXAMPLES
@@ -1131,8 +1555,80 @@ document.addEventListener('keydown', (e) => {
 
 function loadExample(name) {
   clearCanvas();
-  if (name === 'hello') {
-    // MOVI R0, 42; HALT — outputs 42
+
+  if (name === 'token_budget') {
+    // ═══ Token Budget Enforcer ═══
+    // Budget: 1000 tokens. Gate checks each call costs 100 tokens.
+    // After 10 calls, budget exhausted → gate blocks.
+    const n1 = createNode('io',       80, 100, {mode:'input', reg:0, value:1});
+    const n2 = createNode('budget',   80, 240, {name:'token_budget', type:'tokens', limit:1000, reg:1, addr:100});
+    const n3 = createNode('constant', 80, 400, {value:100, reg:2});  // cost per call
+    const n4 = createNode('gate',     340, 180, {budgetAddr:100, cost:100, reg:3});
+    const n5 = createNode('llm',      580, 180, {model:'glm-5.2', maxTok:100, temp:7, reg:4});
+    const n6 = createNode('output',   820, 180, {reg:4});
+    const n7 = createNode('halt',     1020, 180);
+
+    wires.push({from:{nodeId:n1.id,port:0}, to:{nodeId:n4.id,port:0}});
+    wires.push({from:{nodeId:n2.id,port:0}, to:{nodeId:n4.id,port:0}});
+    wires.push({from:{nodeId:n4.id,port:0}, to:{nodeId:n5.id,port:0}});
+    wires.push({from:{nodeId:n5.id,port:0}, to:{nodeId:n6.id,port:0}});
+    wires.push({from:{nodeId:n6.id,port:0}, to:{nodeId:n7.id,port:0}});
+    rerenderAll();
+    log('Loaded: Token Budget Enforcer — 1000 token budget, 100/call gate');
+  }
+
+  else if (name === 'rate_limiter') {
+    // ═══ Rate Limiter ═══
+    // Time-windowed: max 5 actions per window. Counter resets.
+    const n1 = createNode('io',       80, 100, {mode:'input', reg:0, value:1});
+    const n2 = createNode('budget',   80, 240, {name:'rate_window', type:'actions', limit:5, reg:1, addr:110});
+    const n3 = createNode('budget',   80, 400, {name:'time_window', type:'time', limit:60, reg:2, addr:120});
+    const n4 = createNode('gate',     340, 180, {budgetAddr:110, cost:1, reg:3});
+    const n5 = createNode('comparator', 340, 360, {rA:3, rB:2, op:'>'});
+    const n6 = createNode('decision', 580, 280, {rA:3, rB:2, op:'>'});
+    const n7 = createNode('room',     820, 200, {action:'send', room:'api-target', reg:4});
+    const n8 = createNode('output',   1060, 200, {reg:4});
+    const n9 = createNode('halt',     1260, 200);
+
+    wires.push({from:{nodeId:n1.id,port:0}, to:{nodeId:n4.id,port:0}});
+    wires.push({from:{nodeId:n2.id,port:0}, to:{nodeId:n4.id,port:0}});
+    wires.push({from:{nodeId:n4.id,port:0}, to:{nodeId:n6.id,port:0}});
+    wires.push({from:{nodeId:n3.id,port:0}, to:{nodeId:n5.id,port:0}});
+    wires.push({from:{nodeId:n5.id,port:0}, to:{nodeId:n6.id,port:0}});
+    wires.push({from:{nodeId:n6.id,port:0}, to:{nodeId:n7.id,port:0}});
+    wires.push({from:{nodeId:n7.id,port:0}, to:{nodeId:n8.id,port:0}});
+    wires.push({from:{nodeId:n8.id,port:0}, to:{nodeId:n9.id,port:0}});
+    rerenderAll();
+    log('Loaded: Rate Limiter — 5 actions/time-window with comparator gate');
+  }
+
+  else if (name === 'room_entry') {
+    // ═══ Room Entry Protocol ═══
+    // Check budget → enter room → do work → send result → exit room
+    const n1 = createNode('io',       80, 100, {mode:'input', reg:0, value:1});
+    const n2 = createNode('budget',   80, 240, {name:'room_actions', type:'actions', limit:10, reg:1, addr:130});
+    const n3 = createNode('gate',     340, 160, {budgetAddr:130, cost:1, reg:2});
+    const n4 = createNode('room',     580, 160, {action:'enter', room:'plato-main', reg:3});
+    const n5 = createNode('llm',      820, 160, {model:'glm-5.2', maxTok:256, temp:7, reg:4});
+    const n6 = createNode('room',     1060, 160, {action:'send', room:'plato-main', reg:5});
+    const n7 = createNode('room',     1060, 320, {action:'exit', room:'plato-main', reg:6});
+    const n8 = createNode('output',   1300, 160, {reg:5});
+    const n9 = createNode('halt',     1500, 240);
+
+    wires.push({from:{nodeId:n1.id,port:0}, to:{nodeId:n3.id,port:0}});
+    wires.push({from:{nodeId:n2.id,port:0}, to:{nodeId:n3.id,port:0}});
+    wires.push({from:{nodeId:n3.id,port:0}, to:{nodeId:n4.id,port:0}});
+    wires.push({from:{nodeId:n4.id,port:0}, to:{nodeId:n5.id,port:0}});
+    wires.push({from:{nodeId:n5.id,port:0}, to:{nodeId:n6.id,port:0}});
+    wires.push({from:{nodeId:n6.id,port:0}, to:{nodeId:n8.id,port:0}});
+    wires.push({from:{nodeId:n8.id,port:0}, to:{nodeId:n9.id,port:0}});
+    wires.push({from:{nodeId:n7.id,port:0}, to:{nodeId:n9.id,port:0}});
+    rerenderAll();
+    log('Loaded: Room Entry Protocol — budget → enter → LLM → send → exit');
+  }
+
+  // ── Classic examples (kept from v2) ──
+  else if (name === 'hello') {
     const n1 = createNode('constant', 100, 100, {value:42, reg:0});
     const n2 = createNode('output', 320, 100, {reg:0});
     const n3 = createNode('halt', 520, 100);
@@ -1142,25 +1638,22 @@ function loadExample(name) {
     log('Loaded: Hello World — MOVI R0,42 → OUT → HALT');
   }
   else if (name === 'counter') {
-    // Count 0→5 using INC + CMP + JNE loop
     const n1 = createNode('constant', 60, 80, {value:0, reg:0});
     const n2 = createNode('constant', 60, 180, {value:6, reg:1});
-    const n3 = createNode('arithmetic', 270, 120, {op:'ADD', reg:0, rA:0, rB:0}); // placeholder
+    const n3 = createNode('arithmetic', 270, 120, {op:'ADD', reg:0, rA:0, rB:0});
     const n4 = createNode('output', 470, 80, {reg:0});
     const n5 = createNode('compare', 270, 220, {rA:0, rB:1});
     const n6 = createNode('branch', 470, 220, {type:'JNE', reg:0, label:'L_3'});
     const n7 = createNode('halt', 670, 80);
-    // Wire: n1→n3→n4→n7, n2→n5, n1→n5, n5→n6(loop back to n3)
     wires.push({from:{nodeId:n1.id,port:0}, to:{nodeId:n3.id,port:0}});
     wires.push({from:{nodeId:n3.id,port:0}, to:{nodeId:n4.id,port:0}});
     wires.push({from:{nodeId:n4.id,port:0}, to:{nodeId:n7.id,port:0}});
     wires.push({from:{nodeId:n2.id,port:0}, to:{nodeId:n5.id,port:0}});
     wires.push({from:{nodeId:n5.id,port:0}, to:{nodeId:n6.id,port:0}});
     rerenderAll();
-    log('Loaded: Counter Loop — counts and compares in a loop');
+    log('Loaded: Counter Loop');
   }
   else if (name === 'deadband') {
-    // if R0 > R1 then R2=1 else R2=0
     const n1 = createNode('constant', 60, 80, {value:10, reg:0});
     const n2 = createNode('constant', 60, 180, {value:5, reg:1});
     const n3 = createNode('compare', 270, 130, {rA:0, rB:1});
@@ -1178,10 +1671,9 @@ function loadExample(name) {
     wires.push({from:{nodeId:n6.id,port:0}, to:{nodeId:n7.id,port:0}});
     wires.push({from:{nodeId:n7.id,port:0}, to:{nodeId:n8.id,port:0}});
     rerenderAll();
-    log('Loaded: Deadband Controller — if/else branching');
+    log('Loaded: Deadband Controller');
   }
   else if (name === 'factorial') {
-    // Factorial 5: R0=5, R1=1; loop: R1*=R0; R0--; if R0!=0 goto loop
     const n1 = createNode('constant', 60, 80, {value:5, reg:0});
     const n2 = createNode('constant', 60, 180, {value:1, reg:1});
     const n3 = createNode('arithmetic', 270, 130, {op:'MUL', reg:1, rA:1, rB:0});
@@ -1195,7 +1687,7 @@ function loadExample(name) {
     wires.push({from:{nodeId:n3.id,port:0}, to:{nodeId:n7.id,port:0}});
     wires.push({from:{nodeId:n7.id,port:0}, to:{nodeId:n8.id,port:0}});
     rerenderAll();
-    log('Loaded: Factorial — 5! = 120 with multiply loop');
+    log('Loaded: Factorial — 5! = 120');
   }
 }
 
@@ -1206,7 +1698,7 @@ function loadExample(name) {
 function log(msg) {
   const el = document.getElementById('console');
   const time = new Date().toLocaleTimeString();
-  el.innerHTML = `<div>[${time}] ${msg}</div>` + el.innerHTML;
+  el.innerHTML = `<div><span class="log-time">[${time}]</span> ${msg}</div>` + el.innerHTML;
   if (el.children.length > 50) el.removeChild(el.lastChild);
 }
 
@@ -1214,10 +1706,10 @@ function log(msg) {
 //  INIT
 // ═══════════════════════════════════════════════════════════════════════════
 
-log('FLUX Visual Editor v2 ready');
-log('Drag nodes from palette →');
+log('FLUX Visual Editor v3 ready — SuperInstance');
+log('Drag nodes from palette → canvas');
+log('Try an example from the dropdown ↑');
 
-// Load shared program from URL if present
 loadFromHash();
 </script>
 </body>
